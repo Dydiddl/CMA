@@ -53,6 +53,16 @@ logs
 **/*.rs.bk
 Cargo.lock
 /src-tauri/target/
+/backend/target/
+*.pdb
+debug/
+**/*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+*.rlib
+*.rmeta
 
 # System Files
 .DS_Store
