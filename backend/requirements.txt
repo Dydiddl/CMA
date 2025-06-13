@@ -1,0 +1,39 @@
+# FastAPI 및 웹 서버
+fastapi
+uvicorn
+
+# 데이터베이스 (SQLite 기본 지원)
+sqlalchemy
+alembic
+
+# 인증 및 보안
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# 유틸리티
+pydantic
+pydantic-settings
+python-dotenv
+email-validator
+
+# 문서 처리 (한글, 엑셀 등)
+python-docx
+openpyxl
+xlsxwriter
+
+# 파일 처리
+aiofiles
+
+# 날짜 및 시간
+python-dateutil
+
+# 선택사항: Supabase (클라우드 DB 사용시)
+# supabase==2.0.2
+
+# 개발 도구 (선택사항)
+# pytest==7.4.3
+# pytest-asyncio==0.21.1
+
+# 추가된 패키지
+email-validator

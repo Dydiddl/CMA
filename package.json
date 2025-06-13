@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@storybook/builder-vite": "^9.0.9",
+    "@storybook/react": "^9.0.9"
+  }
+}
