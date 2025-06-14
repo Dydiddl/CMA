@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, DateTime, Date, Numeric, ForeignKey, Text, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from ..db.database import Base
+from app.models.base import Base
 import uuid
 
 class Transaction(Base):

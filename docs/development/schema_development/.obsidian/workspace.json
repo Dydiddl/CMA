@@ -1,0 +1,203 @@
+{
+  "main": {
+    "id": "baf0bb4b6b6416db",
+    "type": "split",
+    "children": [
+      {
+        "id": "9a1568a9bc440cb1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0f811cd7c47d5afc",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "새 탭"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "cc200f26bf8ac0df",
+    "type": "split",
+    "children": [
+      {
+        "id": "4bddf434276611fe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f1005df9712980ba",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "파일 탐색기"
+            }
+          },
+          {
+            "id": "1b5e86a0a33e3f4f",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "검색"
+            }
+          },
+          {
+            "id": "f303d6beb11bbc51",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "북마크"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "5a5cf75281817364",
+    "type": "split",
+    "children": [
+      {
+        "id": "f563dbdf91fc1034",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bc2bb71adfa3ae91",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "백링크"
+            }
+          },
+          {
+            "id": "d991ffa47bf12f04",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "나가는 링크"
+            }
+          },
+          {
+            "id": "7860c6ec6706164a",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "태그"
+            }
+          },
+          {
+            "id": "a63cdebde2a34188",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "개요"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:빠른 전환기 열기": false,
+      "graph:그래프 뷰 열기": false,
+      "canvas:새 캔버스 만들기": false,
+      "daily-notes:오늘의 일일 노트 열기": false,
+      "templates:템플릿 삽입": false,
+      "command-palette:명령어 팔레트 열기": false
+    }
+  },
+  "active": "0f811cd7c47d5afc",
+  "lastOpenFiles": [
+    "업무예시.md",
+    "Glossary.md",
+    "05_계약관리/05_청구/체크리스트.md",
+    "05_계약관리/04_준공/체크리스트.md",
+    "05_계약관리/03_착공/체크리스트.md",
+    "05_계약관리/02_계약/체크리스트.md",
+    "05_계약관리/01_계약전/체크리스트.md",
+    "05_계약관리/README.md",
+    "05_계약관리/05_청구/README.md",
+    "05_계약관리/04_준공/README.md",
+    "05_계약관리/03_착공/README.md",
+    "05_계약관리/02_계약/README.md",
+    "05_계약관리/01_계약전/README.md",
+    "04_거래처/일용근무자.md",
+    "05_계약관리/05_청구/서류 양식/[별지 제2호 서식] 임금청구 확인서(충청남도 체불임금 없는 관급공사 운영을 위한 조례).hwp",
+    "05_계약관리/05_청구/서류 양식/040_청구_원촌 소공원 조성공사.xlsx",
+    "05_계약관리/05_청구/서류 양식",
+    "05_계약관리/05_청구/새 폴더",
+    "05_계약관리/04_준공/서류 양식/030_준공.xlsx",
+    "05_계약관리/04_준공/서류 양식/030_준공_월촌 소공원 조성공사.xlsx",
+    "05_계약관리/04_준공/서류 양식",
+    "05_계약관리/04_준공/새 폴더",
+    "05_계약관리/03_착공/서류 양식/10. 산업안전보건관리비_사용계획서(별지제46호_서식).hwp",
+    "05_계약관리/03_착공/서류 양식/01_환경관리비사용계획서.hwp",
+    "05_계약관리/05_청구/제출서류.md",
+    "05_계약관리/04_준공/제출서류.md",
+    "05_계약관리/03_착공/제출서류.md",
+    "05_계약관리/02_계약/제출서류.md",
+    "05_계약관리/01_계약전/제출서류.md",
+    "05_계약관리/계약.md",
+    "05_계약관리/02_계약/계약.md",
+    "05_계약관리/05_청구/청구.md",
+    "05_계약관리/03_착공/착공.md",
+    "05_계약관리/04_준공/준공.md",
+    "05_계약관리/01_계약전/계약전.md",
+    "03_본사/분점.md"
+  ]
+}
