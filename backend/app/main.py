@@ -1,10 +1,27 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.api_v1.api import api_router
-from app.core.config import settings
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import IntegrityError
+
+from backend.app.core.config import settings
+from backend.app.api.v1.api import api_router
+from backend.app.core.error_handlers import (
+    validation_exception_handler,
+    integrity_error_handler,
+    permission_error_handler,
+    not_found_error_handler,
+    general_exception_handler
+)
+from backend.app.schemas.error import (
+    ErrorResponse,
+    ValidationErrorResponse,
+    PermissionErrorResponse,
+    NotFoundErrorResponse
+)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
     description="""
     건설 프로젝트 관리 시스템 API
     
@@ -23,9 +40,16 @@ app = FastAPI(
     * 일반 사용자: 자신의 프로젝트와 작업만 접근 가능
     """,
     version="1.0.0",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
+    responses={
+        400: {"model": ErrorResponse, "description": "잘못된 요청"},
+        401: {"model": ErrorResponse, "description": "인증되지 않은 요청"},
+        403: {"model": PermissionErrorResponse, "description": "권한이 없는 요청"},
+        404: {"model": NotFoundErrorResponse, "description": "리소스를 찾을 수 없음"},
+        422: {"model": ValidationErrorResponse, "description": "유효성 검사 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"}
+    }
 )
 
 # CORS 설정
@@ -37,6 +61,13 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# 에러 핸들러 등록
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(IntegrityError, integrity_error_handler)
+app.add_exception_handler(PermissionErrorResponse, permission_error_handler)
+app.add_exception_handler(NotFoundErrorResponse, not_found_error_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 # API 라우터 등록
 app.include_router(api_router, prefix=settings.API_V1_STR)

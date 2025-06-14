@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
-from pydantic import AnyHttpUrl, BaseSettings, validator
+from pydantic import AnyHttpUrl, validator
 import os
 from pathlib import Path
 from functools import lru_cache
 import secrets
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     """
@@ -12,7 +13,7 @@ class Settings(BaseSettings):
     """
     
     # 프로젝트 기본 정보
-    PROJECT_NAME: str = "Construction Management API"
+    PROJECT_NAME: str = "CMA"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     DESCRIPTION: str = "건설회사 관리 시스템 API"
@@ -35,16 +36,18 @@ class Settings(BaseSettings):
     DB_NAME: str = os.getenv("DB_NAME", "construction_management")
     
     # SQLite 설정
-    SQLALCHEMY_DATABASE_URI: str = "sqlite:///./construction_management.db"
+    SQLALCHEMY_DATABASE_URI: str = None
     
     # Redis 설정
-    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = ""
+    REDIS_DB: int = 0
     
     # JWT 설정
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS 설정
@@ -68,7 +71,7 @@ class Settings(BaseSettings):
     
     # 로깅 설정
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: str = "app.log"
+    LOG_FILE: str = "logs/app.log"
     
     # 보안 설정
     BCRYPT_ROUNDS: int = 12
@@ -130,6 +133,37 @@ class Settings(BaseSettings):
             "allow_credentials": self.ALLOW_CREDENTIALS
         }
     
+    # 추가된 필드
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    
+    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
+
+    # 이메일 설정
+    SMTP_TLS: bool = True
+    SMTP_PORT: int = 587
+    SMTP_HOST: str
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+    EMAILS_FROM_EMAIL: str
+    EMAILS_FROM_NAME: str
+
+    # API 문서화 설정
+    API_DOCS_TITLE: str = "CMA API Documentation"
+    API_DOCS_DESCRIPTION: str = "CMA 프로젝트의 API 문서입니다."
+    API_DOCS_VERSION: str = "1.0.0"
+    API_DOCS_TERMS_OF_SERVICE: str = "http://example.com/terms/"
+    API_DOCS_CONTACT_NAME: str = "CMA Team"
+    API_DOCS_CONTACT_URL: str = "http://example.com/contact/"
+    API_DOCS_CONTACT_EMAIL: str = "contact@example.com"
+    API_DOCS_LICENSE_NAME: str = "MIT"
+    API_DOCS_LICENSE_URL: str = "http://example.com/license/"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

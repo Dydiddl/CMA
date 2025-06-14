@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
 
-from app.db.base_class import Base
+from app.models.base import Base
 
 class BudgetType(str, enum.Enum):
     INITIAL = "initial"  # 초기 예산

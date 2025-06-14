@@ -1,16 +1,28 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, desc
 
 from app.models.api_doc import APIDoc, APIDocVersion, APIDocTag, APIDocComment, APIDocStatus
 from app.schemas.api_doc import APIDocCreate, APIDocUpdate, APIDocVersionCreate, APIDocTagCreate, APIDocCommentCreate, APIDocCommentUpdate
 
 def create_api_doc(db: Session, api_doc: APIDocCreate, user_id: int) -> APIDoc:
+    """API 문서 생성"""
+    # 태그 처리
+    tags = []
+    for tag_name in api_doc.tags:
+        tag = db.query(APIDocTag).filter(APIDocTag.name == tag_name).first()
+        if not tag:
+            tag = APIDocTag(name=tag_name, created_by=user_id)
+            db.add(tag)
+        tags.append(tag)
+
+    # API 문서 생성
     db_api_doc = APIDoc(
         **api_doc.dict(),
         created_by=user_id,
-        updated_by=user_id
+        updated_by=user_id,
+        tags=tags
     )
     db.add(db_api_doc)
     db.commit()
@@ -18,6 +30,7 @@ def create_api_doc(db: Session, api_doc: APIDocCreate, user_id: int) -> APIDoc:
     return db_api_doc
 
 def get_api_doc(db: Session, api_doc_id: int) -> Optional[APIDoc]:
+    """API 문서 조회"""
     return db.query(APIDoc).filter(APIDoc.id == api_doc_id).first()
 
 def get_api_docs(
@@ -34,6 +47,7 @@ def get_api_docs(
     skip: int = 0,
     limit: int = 100
 ) -> List[APIDoc]:
+    """API 문서 목록 조회"""
     query = db.query(APIDoc)
     
     if title:
@@ -54,35 +68,52 @@ def get_api_docs(
         query = query.filter(APIDoc.created_at >= created_at_from)
     if created_at_to:
         query = query.filter(APIDoc.created_at <= created_at_to)
-        
-    return query.offset(skip).limit(limit).all()
+    
+    return query.order_by(desc(APIDoc.updated_at)).offset(skip).limit(limit).all()
 
 def update_api_doc(db: Session, api_doc_id: int, api_doc: APIDocUpdate, user_id: int) -> Optional[APIDoc]:
+    """API 문서 수정"""
     db_api_doc = get_api_doc(db, api_doc_id)
     if not db_api_doc:
         return None
-        
+
+    # 태그 처리
+    if api_doc.tags is not None:
+        tags = []
+        for tag_name in api_doc.tags:
+            tag = db.query(APIDocTag).filter(APIDocTag.name == tag_name).first()
+            if not tag:
+                tag = APIDocTag(name=tag_name, created_by=user_id)
+                db.add(tag)
+            tags.append(tag)
+        db_api_doc.tags = tags
+
+    # 필드 업데이트
     update_data = api_doc.dict(exclude_unset=True)
-    update_data["updated_by"] = user_id
     for field, value in update_data.items():
-        setattr(db_api_doc, field, value)
+        if field != "tags":
+            setattr(db_api_doc, field, value)
     
+    db_api_doc.updated_by = user_id
     db_api_doc.updated_at = datetime.utcnow()
+    
     db.commit()
     db.refresh(db_api_doc)
     return db_api_doc
 
 def delete_api_doc(db: Session, api_doc_id: int) -> bool:
+    """API 문서 삭제"""
     db_api_doc = get_api_doc(db, api_doc_id)
     if not db_api_doc:
         return False
-        
+    
     db.delete(db_api_doc)
     db.commit()
     return True
 
 # 버전 관리
 def create_api_doc_version(db: Session, api_doc_id: int, version: APIDocVersionCreate, user_id: int) -> APIDocVersion:
+    """API 문서 버전 생성"""
     db_version = APIDocVersion(**version.dict(), api_doc_id=api_doc_id, created_by=user_id)
     db.add(db_version)
     db.commit()
@@ -93,7 +124,13 @@ def get_api_doc_version(db: Session, version_id: int) -> Optional[APIDocVersion]
     return db.query(APIDocVersion).filter(APIDocVersion.id == version_id).first()
 
 def get_api_doc_versions(db: Session, api_doc_id: int, skip: int = 0, limit: int = 100) -> List[APIDocVersion]:
-    return db.query(APIDocVersion).filter(APIDocVersion.api_doc_id == api_doc_id).offset(skip).limit(limit).all()
+    """API 문서 버전 목록 조회"""
+    return db.query(APIDocVersion)\
+        .filter(APIDocVersion.api_doc_id == api_doc_id)\
+        .order_by(desc(APIDocVersion.created_at))\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 # 태그 관리
 def create_api_doc_tag(db: Session, api_doc_id: int, tag: APIDocTagCreate, user_id: int) -> APIDocTag:
@@ -117,6 +154,7 @@ def delete_api_doc_tag(db: Session, tag_id: int) -> bool:
 
 # 댓글 관리
 def create_api_doc_comment(db: Session, api_doc_id: int, comment: APIDocCommentCreate, user_id: int) -> APIDocComment:
+    """API 문서 댓글 생성"""
     db_comment = APIDocComment(**comment.dict(), api_doc_id=api_doc_id, created_by=user_id)
     db.add(db_comment)
     db.commit()
@@ -127,9 +165,16 @@ def get_api_doc_comment(db: Session, comment_id: int) -> Optional[APIDocComment]
     return db.query(APIDocComment).filter(APIDocComment.id == comment_id).first()
 
 def get_api_doc_comments(db: Session, api_doc_id: int, skip: int = 0, limit: int = 100) -> List[APIDocComment]:
-    return db.query(APIDocComment).filter(APIDocComment.api_doc_id == api_doc_id).offset(skip).limit(limit).all()
+    """API 문서 댓글 목록 조회"""
+    return db.query(APIDocComment)\
+        .filter(APIDocComment.api_doc_id == api_doc_id)\
+        .order_by(APIDocComment.created_at)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 def update_api_doc_comment(db: Session, comment_id: int, comment: APIDocCommentUpdate) -> Optional[APIDocComment]:
+    """API 문서 댓글 수정"""
     db_comment = get_api_doc_comment(db, comment_id)
     if not db_comment:
         return None
@@ -144,6 +189,7 @@ def update_api_doc_comment(db: Session, comment_id: int, comment: APIDocCommentU
     return db_comment
 
 def delete_api_doc_comment(db: Session, comment_id: int) -> bool:
+    """API 문서 댓글 삭제"""
     db_comment = get_api_doc_comment(db, comment_id)
     if not db_comment:
         return False
@@ -154,7 +200,8 @@ def delete_api_doc_comment(db: Session, comment_id: int) -> bool:
 
 # 통계
 def get_api_doc_statistics(db: Session) -> Dict[str, Any]:
-    # 기본 통계
+    """API 문서 통계 정보 조회"""
+    # 전체 문서 수
     total_docs = db.query(func.count(APIDoc.id)).scalar()
     
     # 문서 타입별 분포
@@ -178,9 +225,9 @@ def get_api_doc_statistics(db: Session) -> Dict[str, Any]:
         .all()
     )
     
-    # 최근 업데이트
+    # 최근 업데이트된 문서
     recent_updates = db.query(APIDoc)\
-        .order_by(APIDoc.updated_at.desc())\
+        .order_by(desc(APIDoc.updated_at))\
         .limit(5)\
         .all()
     
@@ -203,7 +250,15 @@ def get_api_doc_statistics(db: Session) -> Dict[str, Any]:
         "docs_by_type": docs_by_type,
         "docs_by_status": docs_by_status,
         "docs_by_version": docs_by_version,
-        "recent_updates": recent_updates,
+        "recent_updates": [
+            {
+                "id": doc.id,
+                "title": doc.title,
+                "status": doc.status,
+                "updated_at": doc.updated_at
+            }
+            for doc in recent_updates
+        ],
         "popular_tags": popular_tags,
         "active_users": active_users
     } 

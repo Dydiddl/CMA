@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text, JSON
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text, JSON, UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
+import uuid
 
-from app.db.base_class import Base
+from backend.app.models.base import Base
 
 class ContractType(enum.Enum):
     CONSTRUCTION = "construction"  # 공사 계약
@@ -30,7 +31,7 @@ class PaymentStatus(enum.Enum):
 class Contract(Base):
     __tablename__ = "contracts"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     contract_number = Column(String(50), unique=True, nullable=False)
     contract_type = Column(Enum(ContractType), nullable=False)
     status = Column(Enum(ContractStatus), default=ContractStatus.DRAFT)
@@ -57,8 +58,12 @@ class Contract(Base):
     payment_schedule = Column(JSON)  # 지급 일정
     
     # 담당자 정보
-    manager_id = Column(Integer, ForeignKey("users.id"))
-    department_id = Column(Integer, ForeignKey("departments.id"))
+    manager_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"))
+    
+    # 거래처 정보
+    vendor_id = Column(UUID(as_uuid=True), ForeignKey("vendors.id"), nullable=True)
+    vendor = relationship("Vendor", back_populates="contracts")
     
     # 계약서 파일
     contract_file_url = Column(String(200))
@@ -77,18 +82,19 @@ class Contract(Base):
     department = relationship("Department", back_populates="contracts")
     amendments = relationship("ContractAmendment", back_populates="contract")
     payments = relationship("ContractPayment", back_populates="contract")
+    history = relationship("ContractHistory", back_populates="contract")
 
 class ContractAmendment(Base):
     __tablename__ = "contract_amendments"
 
-    id = Column(Integer, primary_key=True, index=True)
-    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
     amendment_number = Column(String(50), nullable=False)
     amendment_date = Column(DateTime, nullable=False)
     reason = Column(Text, nullable=False)
     changes = Column(JSON, nullable=False)  # 변경사항 상세
     status = Column(Enum(ContractStatus), default=ContractStatus.PENDING)
-    approved_by = Column(Integer, ForeignKey("users.id"))
+    approved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     approved_at = Column(DateTime)
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -101,8 +107,8 @@ class ContractAmendment(Base):
 class ContractPayment(Base):
     __tablename__ = "contract_payments"
 
-    id = Column(Integer, primary_key=True, index=True)
-    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
     payment_number = Column(String(50), nullable=False)
     due_date = Column(DateTime, nullable=False)
     amount = Column(Float, nullable=False)
@@ -115,4 +121,22 @@ class ContractPayment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 관계
-    contract = relationship("Contract", back_populates="payments") 
+    contract = relationship("Contract", back_populates="payments")
+
+class ContractHistory(Base):
+    __tablename__ = "contract_history"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    action_type = Column(String(50), nullable=False)  # CREATE, UPDATE, DELETE
+    previous_data = Column(JSON, nullable=True)
+    new_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    contract = relationship("Contract", back_populates="history")
+    user = relationship("User", back_populates="contract_changes")
+
+    def __repr__(self):
+        return f"<ContractHistory {self.contract_id} {self.action_type}>" 

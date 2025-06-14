@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import (
+from backend.app.api.endpoints import (
     auth,
     users,
     projects,

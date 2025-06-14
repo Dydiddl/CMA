@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 
-from app.models.budget import Budget, BudgetItem, BudgetAttachment, BudgetApproval, BudgetAlert, BudgetStatus
-from app.schemas.budget import BudgetCreate, BudgetUpdate, BudgetItemCreate, BudgetItemUpdate, BudgetAttachmentCreate, BudgetApprovalCreate, BudgetAlertCreate, BudgetAlertUpdate
+from backend.app.models.budget import Budget, BudgetItem, BudgetAttachment, BudgetApproval, BudgetAlert, BudgetStatus
+from backend.app.schemas.budget import BudgetCreate, BudgetUpdate, BudgetItemCreate, BudgetItemUpdate, BudgetAttachmentCreate, BudgetApprovalCreate, BudgetAlertCreate, BudgetAlertUpdate
 
 def create_budget(db: Session, budget: BudgetCreate, user_id: int) -> Budget:
     db_budget = Budget(

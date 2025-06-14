@@ -2,9 +2,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 
-from app.api import deps
-from app.crud import budget as budget_crud
-from app.schemas.budget import (
+from backend.app.api import deps
+from backend.app.crud import budget as budget_crud
+from backend.app.schemas.budget import (
     Budget, BudgetCreate, BudgetUpdate,
     BudgetItem, BudgetItemCreate, BudgetItemUpdate,
     BudgetAttachment, BudgetAttachmentCreate,
