@@ -28,6 +28,11 @@ aiofiles
 # 날짜 및 시간
 python-dateutil
 
+# 테스트
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
 # 선택사항: Supabase (클라우드 DB 사용시)
 # supabase==2.0.2
 
