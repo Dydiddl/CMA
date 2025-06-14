@@ -1,7 +1,7 @@
 from sqlalchemy import Date, Numeric, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
-from .base import Base
+from app.models.base import Base
 
 class Revenue(Base):
     """
