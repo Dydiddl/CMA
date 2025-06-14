@@ -1,7 +1,7 @@
-# Construction Management Desktop App
+# 건설 관리 시스템 (Construction Management System)
 
-## 🚀 프로젝트 개요
-건설회사 내부에서 사용할 설치형 관리 프로그램입니다.
+## 프로젝트 개요
+건설 프로젝트의 효율적인 관리를 위한 종합적인 관리 시스템입니다. 계약 관리, 진행 상황 추적, 재무 기록, 문서 관리 등 건설 프로젝트의 전반적인 업무를 디지털화하여 관리할 수 있습니다.
 
 ## 🧩 주요 특징
 - 설치형 실행 파일로 배포 (.exe)
@@ -48,34 +48,37 @@
 ### 설치 방법
 1. 저장소 클론
 ```bash
-git clone [repository-url]
-cd construction_management_app
+git clone https://github.com/yourusername/construction-management.git
+cd construction-management
 ```
 
 2. 백엔드 설정
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: .\venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. 프론트엔드 설정
+3. 데이터베이스 설정
+```bash
+alembic upgrade head
+```
+
+4. 프론트엔드 설정
 ```bash
 cd frontend
 npm install
 ```
 
-### 실행 방법
-1. 백엔드 서버 실행
+5. 개발 서버 실행
 ```bash
+# 백엔드 서버
 cd backend
 source venv/bin/activate
 uvicorn main:app --reload
-```
 
-2. 프론트엔드 개발 서버 실행
-```bash
+# 프론트엔드 개발 서버 (새 터미널에서)
 cd frontend
 npm run tauri dev
 ```
@@ -87,3 +90,57 @@ npm run tauri dev
 
 ## 📝 라이선스
 이 프로젝트는 [라이선스 이름] 라이선스 하에 배포됩니다.
+
+## 현재 진행 상황
+- [x] 프로젝트 기본 구조 설계
+- [x] 데이터베이스 스키마 설계
+- [x] API 문서화
+- [x] 기본 모델 구현
+  - [x] Project
+  - [x] Contract
+  - [x] Progress
+  - [x] FinancialRecord
+  - [x] Document
+- [x] 테스트 환경 구성
+- [ ] API 엔드포인트 구현
+- [ ] 프론트엔드 개발
+  - [ ] Tauri 데스크톱 앱 UI 구현
+  - [ ] 오프라인 지원 기능
+  - [ ] 로컬 데이터 동기화
+- [ ] 사용자 인증 시스템
+- [ ] 파일 업로드 시스템
+- [ ] 보고서 생성 시스템
+
+## 프로젝트 구조
+```
+construction-management/
+├── backend/
+│   ├── app/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── api/
+│   │   └── core/
+│   ├── tests/
+│   └── migrations/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── tauri/
+│   ├── public/
+│   └── package.json
+└── docs/
+    ├── api/
+    ├── architecture/
+    └── guides/
+```
+
+## 기여 방법
+1. 이슈 생성
+2. 브랜치 생성
+3. 변경사항 커밋
+4. Pull Request 생성
+
+## 연락처
+- 이메일: your.email@example.com
+- 프로젝트 관리자: [이름]
