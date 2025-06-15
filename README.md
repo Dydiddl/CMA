@@ -144,3 +144,101 @@ construction-management/
 ## 연락처
 - 이메일: your.email@example.com
 - 프로젝트 관리자: [이름]
+
+## 설치 가이드
+
+### Windows
+1. Python 3.8 이상 설치
+2. Node.js 16 이상 설치
+3. Rust 설치 (Tauri 빌드용)
+4. 프로젝트 클론
+5. 백엔드 설정
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/Scripts/activate  # Windows
+   pip install -r requirements.txt
+   ```
+6. 프론트엔드 설정
+   ```bash
+   cd frontend
+   npm install
+   ```
+7. Tauri 빌드
+   ```bash
+   cd src-tauri
+   cargo build
+   ```
+
+### macOS
+1. Python 3.8 이상 설치
+   ```bash
+   brew install python@3.8
+   ```
+2. Node.js 16 이상 설치
+   ```bash
+   brew install node@16
+   ```
+3. Rust 설치
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+4. 프로젝트 클론
+5. 백엔드 설정
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate  # macOS
+   pip install -r requirements.txt
+   ```
+6. 프론트엔드 설정
+   ```bash
+   cd frontend
+   npm install
+   ```
+7. Tauri 빌드
+   ```bash
+   cd src-tauri
+   cargo build
+   ```
+
+## 개발 서버 실행
+
+### 백엔드
+```bash
+cd backend
+source venv/Scripts/activate  # Windows
+source venv/bin/activate      # macOS
+uvicorn app.main:app --reload
+```
+
+### 프론트엔드
+```bash
+cd frontend
+npm run dev
+```
+
+### Tauri 개발
+```bash
+cd src-tauri
+cargo tauri dev
+```
+
+## 빌드
+
+### Windows
+```bash
+cd src-tauri
+cargo tauri build
+```
+
+### macOS
+```bash
+cd src-tauri
+cargo tauri build
+```
+
+## 주의사항
+- macOS에서 개발 시 Xcode Command Line Tools가 필요합니다.
+- macOS에서 Tauri 빌드 시 추가 의존성이 필요할 수 있습니다.
+- 환경 변수 설정이 OS별로 다를 수 있으니 주의하세요.

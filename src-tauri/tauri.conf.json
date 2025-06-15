@@ -1,55 +1,56 @@
 {
   "build": {
-    "beforeDevCommand": " npm run dev",
-    "beforeBuildCommand": " npm run build",
-    "devPath": "http://localhost:3000",
-    "distDir": "../dist"
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "scripts": {
     "dev": "vite"
   },
   "package": {
-    "productName": "건설 프로젝트 관리 시스템",
+    "productName": "CMA",
     "version": "0.1.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "dialog": {
+        "all": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["**"]
+      }
+    },
     "bundle": {
-      "identifier": "com.construction.management",
+      "active": true,
+      "targets": "all",
+      "identifier": "com.cma.dev",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
-      ],
-      "active": true,
-      "targets": "all"
+      ]
     },
-    "windows": [
-      {
-        "title": "건설 프로젝트 관리 시스템",
-        "width": 1200,
-        "height": 800,
-        "fullscreen": false,
-        "resizable": true
-      }
-    ],
     "security": {
       "csp": null
     },
-    "allowlist": {
-      "fs": {
-        "readFile": true,
-        "writeFile": true,
-        "readDir": true,
-        "scope": ["**"]
-      },
-      "path": {
-        "all": true
-      },
-      "shell": {
-        "open": true
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "CMA",
+        "width": 1200,
+        "height": 800
       }
-    }
+    ]
   }
 }
