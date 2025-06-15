@@ -1,33 +1,38 @@
-from typing import Optional
+from typing import List, Optional
+from pydantic import BaseModel
 from datetime import datetime
-from pydantic import BaseModel, Field
 
 # 공유 속성
 class FileBase(BaseModel):
-    description: Optional[str] = Field(None, description="파일 설명")
+    filename: str
+    file_path: str
+    file_size: int
+    file_type: str
 
 # 생성 시 필요한 속성
 class FileCreate(FileBase):
-    project_id: Optional[int] = Field(None, description="프로젝트 ID")
-    task_id: Optional[int] = Field(None, description="작업 ID")
+    uploaded_by: int
 
 # 업데이트 시 필요한 속성
-class FileUpdate(FileBase):
-    pass
+class FileUpdate(BaseModel):
+    filename: Optional[str] = None
+    file_type: Optional[str] = None
 
 # API 응답에 포함되는 속성
-class File(FileBase):
+class FileInDB(FileBase):
     id: int
-    filename: str
-    original_filename: str
-    file_path: str
-    file_type: str
-    file_size: int
-    project_id: Optional[int]
-    task_id: Optional[int]
-    uploader_id: int
+    uploaded_by: int
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        orm_mode = True 
+        orm_mode = True
+
+class FileResponse(FileInDB):
+    pass
+
+class FileList(BaseModel):
+    items: List[FileResponse]
+    total: int
+    skip: int
+    limit: int 

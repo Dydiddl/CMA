@@ -45,7 +45,15 @@ def read_projects(
             detail="프로젝트 조회 권한이 없습니다"
         )
     
-    projects = project_crud.get_multi(db, skip=skip, limit=limit)
+    if current_user.is_superuser:
+        projects = project_crud.get_multi(db=db, skip=skip, limit=limit)
+    else:
+        projects = project_crud.get_multi_by_owner(
+            db=db,
+            owner_id=current_user.id,
+            skip=skip,
+            limit=limit
+        )
     return projects
 
 @router.get("/{project_id}", response_model=Project)
@@ -70,6 +78,13 @@ def read_project(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="프로젝트를 찾을 수 없습니다"
         )
+    
+    if not current_user.is_superuser and project.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="프로젝트 조회 권한이 없습니다"
+        )
+    
     return project
 
 @router.put("/{project_id}", response_model=Project)
@@ -94,6 +109,12 @@ def update_project(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="프로젝트를 찾을 수 없습니다"
+        )
+    
+    if not current_user.is_superuser and project.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="프로젝트 수정 권한이 없습니다"
         )
     
     project = project_crud.update(db=db, db_obj=project, obj_in=project_in)
@@ -122,5 +143,61 @@ def delete_project(
             detail="프로젝트를 찾을 수 없습니다"
         )
     
+    if not current_user.is_superuser and project.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="프로젝트 삭제 권한이 없습니다"
+        )
+    
     project_crud.remove(db=db, id=project_id)
-    return {"status": "success"} 
+    return {"status": "success"}
+
+@router.get("/status/{status}", response_model=List[Project])
+def read_projects_by_status(
+    *,
+    db: Session = Depends(deps.get_db),
+    status: str,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(deps.get_current_user)
+) -> List[Project]:
+    """
+    상태별 프로젝트 목록을 조회합니다.
+    """
+    if not check_permissions(current_user, ["read:project"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="프로젝트 조회 권한이 없습니다"
+        )
+    
+    projects = project_crud.get_projects_by_status(
+        db=db,
+        status=status,
+        skip=skip,
+        limit=limit
+    )
+    return projects
+
+@router.get("/active", response_model=List[Project])
+def read_active_projects(
+    *,
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(deps.get_current_user)
+) -> List[Project]:
+    """
+    활성화된 프로젝트 목록을 조회합니다.
+    """
+    if not check_permissions(current_user, ["read:project"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="프로젝트 조회 권한이 없습니다"
+        )
+    
+    projects = project_crud.get_active_projects(
+        db=db,
+        skip=skip,
+        limit=limit
+    )
+    return projects 

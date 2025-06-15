@@ -9,7 +9,7 @@ from app.schemas.api_doc import (
     APIDocCreate, APIDocUpdate, APIDoc,
     APIDocVersion, APIDocVersionCreate,
     APIDocTag, APIDocTagCreate,
-    APIDocComment, APIDocCommentCreate,
+    APIDocComment, APIDocCommentCreate, APIDocCommentUpdate,
     APIDocStatistics
 )
 from app.crud import api_doc as api_doc_crud
@@ -48,6 +48,12 @@ def read_api_docs(
     title: Optional[str] = None,
     doc_type: Optional[str] = None,
     status: Optional[str] = None,
+    version: Optional[str] = None,
+    endpoint: Optional[str] = None,
+    method: Optional[str] = None,
+    created_by: Optional[int] = None,
+    created_at_from: Optional[str] = None,
+    created_at_to: Optional[str] = None,
     current_user: User = Depends(deps.get_current_user)
 ) -> List[APIDoc]:
     """
@@ -65,7 +71,13 @@ def read_api_docs(
         limit=limit,
         title=title,
         doc_type=doc_type,
-        status=status
+        status=status,
+        version=version,
+        endpoint=endpoint,
+        method=method,
+        created_by=created_by,
+        created_at_from=created_at_from,
+        created_at_to=created_at_to
     )
     return api_docs
 
@@ -216,6 +228,32 @@ def create_tag(
     )
     return tag
 
+@router.delete("/tags/{tag_id}")
+def delete_tag(
+    *,
+    db: Session = Depends(deps.get_db),
+    tag_id: int,
+    current_user: User = Depends(deps.get_current_user)
+):
+    """
+    API 문서의 태그를 삭제합니다.
+    """
+    if not check_permissions(current_user, ["delete:api_doc_tag"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API 문서 태그 삭제 권한이 없습니다"
+        )
+    
+    tag = api_doc_crud.get_tag(db=db, tag_id=tag_id)
+    if not tag:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="태그를 찾을 수 없습니다"
+        )
+    
+    api_doc_crud.delete_tag(db=db, tag_id=tag_id)
+    return {"status": "success"}
+
 # API 문서 댓글 관리
 @router.post("/{api_doc_id}/comments", response_model=APIDocComment)
 def create_comment(
@@ -246,6 +284,37 @@ def create_comment(
         api_doc_id=api_doc_id,
         comment_in=comment_in,
         creator_id=current_user.id
+    )
+    return comment
+
+@router.put("/comments/{comment_id}", response_model=APIDocComment)
+def update_comment(
+    *,
+    db: Session = Depends(deps.get_db),
+    comment_id: int,
+    comment_in: APIDocCommentUpdate,
+    current_user: User = Depends(deps.get_current_user)
+) -> APIDocComment:
+    """
+    API 문서의 댓글을 수정합니다.
+    """
+    if not check_permissions(current_user, ["update:api_doc_comment"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API 문서 댓글 수정 권한이 없습니다"
+        )
+    
+    comment = api_doc_crud.get_comment(db=db, comment_id=comment_id)
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="댓글을 찾을 수 없습니다"
+        )
+    
+    comment = api_doc_crud.update_comment(
+        db=db,
+        comment_id=comment_id,
+        comment_in=comment_in
     )
     return comment
 

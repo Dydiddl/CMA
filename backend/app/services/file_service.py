@@ -5,16 +5,22 @@ from typing import Optional, Tuple
 from fastapi import UploadFile
 import aiofiles
 from pathlib import Path
+from app.core.config import settings
 
 class FileService:
-    def __init__(self, base_upload_dir: str = "uploads"):
-        self.base_upload_dir = base_upload_dir
-        self._ensure_upload_dirs()
+    def __init__(self):
+        self.upload_dir = settings.UPLOAD_DIR
+        self.max_file_size = settings.MAX_FILE_SIZE
+        self.allowed_extensions = settings.ALLOWED_FILE_EXTENSIONS
+        
+        # 업로드 디렉토리가 없으면 생성
+        if not os.path.exists(self.upload_dir):
+            os.makedirs(self.upload_dir)
 
     def _ensure_upload_dirs(self):
         """필요한 업로드 디렉토리들을 생성합니다."""
         # 기본 업로드 디렉토리
-        os.makedirs(self.base_upload_dir, exist_ok=True)
+        os.makedirs(self.upload_dir, exist_ok=True)
         
         # 문서 유형별 디렉토리
         document_types = [
@@ -132,8 +138,21 @@ class FileService:
         ]
         
         for doc_type in document_types:
-            os.makedirs(os.path.join(self.base_upload_dir, doc_type), exist_ok=True)
+            os.makedirs(os.path.join(self.upload_dir, doc_type), exist_ok=True)
 
+    def validate_file_type(self, filename: str) -> bool:
+        """
+        파일 형식을 검증합니다.
+        """
+        extension = os.path.splitext(filename)[1].lower()
+        return extension in self.allowed_extensions
+    
+    def validate_file_size(self, file_size: int) -> bool:
+        """
+        파일 크기를 검증합니다.
+        """
+        return file_size <= self.max_file_size
+    
     async def save_file(
         self,
         file: UploadFile,
@@ -157,18 +176,7 @@ class FileService:
         file_ext = os.path.splitext(file.filename)[1].lower()
         
         # 허용된 파일 형식 검증
-        allowed_extensions = {
-            # 문서
-            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-            # 도면
-            '.dwg', '.dxf', '.rvt', '.ifc',
-            # 이미지
-            '.jpg', '.jpeg', '.png', '.gif', '.bmp',
-            # 기타
-            '.txt', '.csv', '.zip', '.rar'
-        }
-        
-        if file_ext not in allowed_extensions:
+        if not self.validate_file_type(file.filename):
             raise ValueError(f"지원하지 않는 파일 형식입니다: {file_ext}")
         
         # 저장 경로 생성
@@ -178,7 +186,7 @@ class FileService:
         else:
             filename = f"{document_id}_{timestamp}{file_ext}"
             
-        save_path = os.path.join(self.base_upload_dir, document_type, filename)
+        save_path = os.path.join(self.upload_dir, document_type, filename)
         
         # 파일 저장
         async with aiofiles.open(save_path, 'wb') as out_file:
@@ -202,7 +210,7 @@ class FileService:
         """
         try:
             # URL에서 실제 파일 경로 추출
-            file_path = os.path.join(self.base_upload_dir, file_url.lstrip('/uploads/'))
+            file_path = os.path.join(self.upload_dir, file_url.lstrip('/uploads/'))
             if os.path.exists(file_path):
                 os.remove(file_path)
                 return True
@@ -221,7 +229,7 @@ class FileService:
             Optional[dict]: 파일 정보 (크기, 생성일, 수정일 등)
         """
         try:
-            file_path = os.path.join(self.base_upload_dir, file_url.lstrip('/uploads/'))
+            file_path = os.path.join(self.upload_dir, file_url.lstrip('/uploads/'))
             if os.path.exists(file_path):
                 stat = os.stat(file_path)
                 return {
@@ -246,10 +254,10 @@ class FileService:
             Optional[str]: 새로운 파일 URL
         """
         try:
-            old_path = os.path.join(self.base_upload_dir, old_url.lstrip('/uploads/'))
+            old_path = os.path.join(self.upload_dir, old_url.lstrip('/uploads/'))
             if os.path.exists(old_path):
                 filename = os.path.basename(old_path)
-                new_path = os.path.join(self.base_upload_dir, new_document_type, filename)
+                new_path = os.path.join(self.upload_dir, new_document_type, filename)
                 shutil.move(old_path, new_path)
                 return f"/uploads/{new_document_type}/{filename}"
             return None
