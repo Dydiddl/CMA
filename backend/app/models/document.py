@@ -1,9 +1,9 @@
 from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
-from .base import Base
+from .base import BaseModel
 
-class Document(Base):
+class Document(BaseModel):
     """
     계약 관련 문서를 관리하는 모델
     """

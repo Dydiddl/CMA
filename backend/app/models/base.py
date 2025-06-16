@@ -1,11 +1,14 @@
 from datetime import datetime
 from typing import Any
 from sqlalchemy.orm import as_declarative, declared_attr, Mapped, mapped_column
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, Column, Integer
 from uuid import uuid4, UUID
+from app.db.base import Base
 
 @as_declarative()
-class Base:
+class BaseModel(Base):
+    __abstract__ = True
+
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

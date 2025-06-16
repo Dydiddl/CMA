@@ -1,29 +1,37 @@
-from sqlalchemy import String, Date, Numeric, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from uuid import UUID
-from .base import Base
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from .base import BaseModel
 
-class Contract(Base):
-    """
-    계약 정보를 관리하는 모델
-    """
-    contract_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    client_id: Mapped[UUID] = mapped_column(ForeignKey('client.id'), nullable=False)
-    project_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    contract_amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
-    start_date: Mapped[Date] = mapped_column(Date, nullable=False)
-    end_date: Mapped[Date] = mapped_column(Date, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False)  # pending, active, completed, cancelled
-    contract_type: Mapped[str] = mapped_column(String(50), nullable=False)  # construction, maintenance, consulting
-    created_by: Mapped[UUID] = mapped_column(ForeignKey('user.id'), nullable=False)
+class Contract(BaseModel):
+    __tablename__ = "contracts"
+
+    name = Column(String, index=True)
+    contract_number = Column(String, unique=True, index=True)
+    contract_amount = Column(Float)
+    contract_date = Column(DateTime)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    client_name = Column(String)
+    client_contact = Column(String)
+    status = Column(String)  # 진행중, 완료, 중단 등
+    description = Column(Text)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"))
 
     # 관계 설정
-    client = relationship("Client", back_populates="contracts")
-    creator = relationship("User", back_populates="created_contracts")
-    labor_costs = relationship("LaborCost", back_populates="contract")
-    revenues = relationship("Revenue", back_populates="contract")
-    expenses = relationship("Expense", back_populates="contract")
-    documents = relationship("Document", back_populates="contract")
+    vendor = relationship("Vendor", back_populates="contracts")
+    documents = relationship("ContractDocument", back_populates="contract")
+    financial_records = relationship("FinancialRecord", back_populates="contract")
 
-    def __repr__(self):
-        return f"<Contract {self.contract_number}>" 
+class ContractDocument(BaseModel):
+    __tablename__ = "contract_documents"
+
+    contract_id = Column(Integer, ForeignKey("contracts.id"))
+    document_type = Column(String)  # 계약서, 견적서, 명세서 등
+    file_path = Column(String)
+    file_name = Column(String)
+    upload_date = Column(DateTime, default=datetime.utcnow)
+    description = Column(Text)
+
+    # 관계 설정
+    contract = relationship("Contract", back_populates="documents") 

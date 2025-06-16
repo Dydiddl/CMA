@@ -1,8 +1,8 @@
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column
-from .base import Base
+from .base import BaseModel
 
-class Client(Base):
+class Client(BaseModel):
     """
     거래처(발주처) 정보를 관리하는 모델
     """

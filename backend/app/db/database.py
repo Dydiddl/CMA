@@ -3,16 +3,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from ..core.config import settings
 
-# 데이터베이스 엔진 생성
-if settings.USE_LOCAL_DB:
-    # SQLite 사용
-    engine = create_engine(
-        settings.DATABASE_URL,
-        connect_args={"check_same_thread": False}  # SQLite 전용 설정
-    )
-else:
-    # PostgreSQL (Supabase) 사용
-    engine = create_engine(settings.get_database_url())
+print(f"[DB 연결 정보] SQLALCHEMY_DATABASE_URI: {settings.SQLALCHEMY_DATABASE_URI}")
+
+# PostgreSQL 데이터베이스 엔진 생성
+engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
 
 # 세션 팩토리 생성
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

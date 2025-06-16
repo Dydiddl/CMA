@@ -1,9 +1,9 @@
 from sqlalchemy import Date, Numeric, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
-from .base import Base
+from .base import BaseModel
 
-class Expense(Base):
+class Expense(BaseModel):
     """
     비용 지출 내역을 관리하는 모델
     """

@@ -1,9 +1,9 @@
 from sqlalchemy import Date, Numeric, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
-from .base import Base
+from .base import BaseModel
 
-class LaborCost(Base):
+class LaborCost(BaseModel):
     """
     인건비 지급 내역을 관리하는 모델
     """
