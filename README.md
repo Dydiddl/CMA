@@ -144,3 +144,33 @@ construction-management/
 ## 연락처
 - 이메일: your.email@example.com
 - 프로젝트 관리자: [이름]
+
+## 설치 방법
+
+### Unix/Linux/macOS 환경
+```bash
+cd backend
+chmod +x setup.sh  # 실행 권한 부여
+./setup.sh
+```
+
+### Windows 환경
+```powershell
+cd backend
+# PowerShell 실행 정책 변경 (관리자 권한 필요)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\setup.ps1
+```
+
+## 서버 실행
+### Unix/Linux/macOS 환경
+```bash
+source venv/bin/activate
+uvicorn app.main:app --reload --port 8000
+```
+
+### Windows 환경
+```powershell
+.\venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --port 8000
+```
