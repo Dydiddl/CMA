@@ -22,9 +22,10 @@ class Settings(BaseSettings):
     """
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Construction Management API"
+    VERSION: str = "1.0.0"
     
     # CORS 설정
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost:3000", "http://localhost:8000"]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
@@ -36,18 +37,27 @@ class Settings(BaseSettings):
 
     # 데이터베이스 설정
     USE_LOCAL_DB: bool = True
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "construction_management"
-    SQLALCHEMY_DATABASE_URI: str = ""
+    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
+    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "construction_management")
+    SQLALCHEMY_DATABASE_URI: Optional[str] = None
+
+    # Excel 처리 설정
+    MAX_EXCEL_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_EXCEL_EXTENSIONS: set = {".xlsx", ".xls"}
+    EXCEL_TEMP_DIR: str = "temp/excel"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.SQLALCHEMY_DATABASE_URI = f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+        if not self.SQLALCHEMY_DATABASE_URI:
+            self.SQLALCHEMY_DATABASE_URI = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+            )
 
     # JWT 설정
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # 로깅 설정
