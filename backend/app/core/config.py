@@ -43,6 +43,20 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "construction_management")
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
+    # 샤딩 설정
+    ENABLE_SHARDING: bool = os.getenv("ENABLE_SHARDING", "false").lower() == "true"
+    SHARD_1_DB: str = os.getenv("SHARD_1_DB", "construction_management_shard1")
+    SHARD_2_DB: str = os.getenv("SHARD_2_DB", "construction_management_shard2")
+    SHARD_1_DATABASE_URI: Optional[str] = None
+    SHARD_2_DATABASE_URI: Optional[str] = None
+
+    # 데이터베이스 성능 설정
+    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "20"))
+    DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "10"))
+    DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+    DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "1800"))
+    SLOW_QUERY_THRESHOLD: float = float(os.getenv("SLOW_QUERY_THRESHOLD", "0.5"))
+
     # Excel 처리 설정
     MAX_EXCEL_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_EXCEL_EXTENSIONS: set = {".xlsx", ".xls"}
@@ -50,10 +64,22 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # 기본 데이터베이스 URI 설정
         if not self.SQLALCHEMY_DATABASE_URI:
             self.SQLALCHEMY_DATABASE_URI = (
                 f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
                 f"@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+            )
+        
+        # 샤드 데이터베이스 URI 설정
+        if self.ENABLE_SHARDING:
+            self.SHARD_1_DATABASE_URI = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}/{self.SHARD_1_DB}"
+            )
+            self.SHARD_2_DATABASE_URI = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}/{self.SHARD_2_DB}"
             )
 
     # JWT 설정
