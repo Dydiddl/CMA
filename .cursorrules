@@ -1,0 +1,1051 @@
+---
+# CMA (Construction Management System) Project Rules
+
+## 🎯 Project Overview
+CMA는 건설 공사 내역서 자동화 시스템으로, 계약 관리, 재무 관리, 노무 관리, 문서 처리 등을 통합적으로 제공하는 Python + React + Tauri 기반의 데스크톱 애플리케이션입니다.
+
+## 📁 Project Structure
+```
+CMA/
+├── backend/                 # Python FastAPI 백엔드
+│   ├── app/
+│   │   ├── api/            # API 엔드포인트
+│   │   ├── models/         # 데이터베이스 모델
+│   │   ├── schemas/        # Pydantic 스키마
+│   │   ├── services/       # 비즈니스 로직
+│   │   └── core/           # 설정 및 보안
+├── frontend/               # React + TypeScript 프론트엔드
+│   ├── src/
+│   │   ├── components/     # React 컴포넌트
+│   │   ├── pages/          # 페이지 컴포넌트
+│   │   └── services/       # API 서비스
+└── src-tauri/             # Tauri 데스크톱 앱 설정
+```
+
+## 🚨 CRITICAL RULES - MUST FOLLOW
+
+### 1. 코드 스타일 (PEP8 준수, snake_case 변수명)
+
+#### Python 백엔드
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+건설 관리 시스템 - [모듈명]
+[모듈 설명]
+"""
+
+from typing import List, Dict, Optional, Union
+from datetime import datetime
+from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
+
+class ConstructionContract:
+    """건설 계약 관리 클래스"""
+    
+    def __init__(self, contract_id: str, project_name: str):
+        self.contract_id = contract_id
+        self.project_name = project_name
+        self.created_at = datetime.now()
+        self.status = "draft"
+    
+    def calculate_total_cost(self, labor_cost: float, material_cost: float) -> float:
+        """총 비용 계산"""
+        return labor_cost + material_cost
+    
+    def update_contract_status(self, new_status: str) -> bool:
+        """계약 상태 업데이트"""
+        try:
+            self.status = new_status
+            logger.info(f"계약 상태 업데이트: {self.contract_id} -> {new_status}")
+            return True
+        except Exception as e:
+            logger.error(f"계약 상태 업데이트 실패: {e}")
+            return False
+```
+
+#### TypeScript 프론트엔드
+```typescript
+// 파일명: construction-contract.ts
+// 컴포넌트명: ConstructionContract
+// 변수명: camelCase
+// 상수명: UPPER_SNAKE_CASE
+
+interface ConstructionContract {
+  contractId: string;
+  projectName: string;
+  totalCost: number;
+  status: ContractStatus;
+  createdAt: Date;
+}
+
+enum ContractStatus {
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled'
+}
+
+const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
+  [ContractStatus.DRAFT]: '초안',
+  [ContractStatus.ACTIVE]: '진행중',
+  [ContractStatus.COMPLETED]: '완료',
+  [ContractStatus.CANCELLED]: '취소'
+};
+
+export const ConstructionContractComponent: React.FC<{
+  contract: ConstructionContract;
+  onStatusChange: (status: ContractStatus) => void;
+}> = ({ contract, onStatusChange }) => {
+  const handleStatusUpdate = (newStatus: ContractStatus) => {
+    try {
+      onStatusChange(newStatus);
+    } catch (error) {
+      console.error('계약 상태 업데이트 실패:', error);
+    }
+  };
+
+  return (
+    <div className="construction-contract">
+      <h3>{contract.projectName}</h3>
+      <p>계약 ID: {contract.contractId}</p>
+      <p>총 비용: {contract.totalCost.toLocaleString()}원</p>
+      <p>상태: {CONTRACT_STATUS_LABELS[contract.status]}</p>
+    </div>
+  );
+};
+```
+
+### 2. 파일 분리 기준
+
+#### 백엔드 구조
+```python
+# models/contract.py - 데이터베이스 모델
+from sqlalchemy import Column, String, DateTime, Float, Enum
+from sqlalchemy.sql import func
+from ..db.base import Base
+
+class Contract(Base):
+    __tablename__ = "contracts"
+    
+    id = Column(String, primary_key=True, index=True)
+    project_name = Column(String, nullable=False)
+    contract_amount = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    status = Column(Enum("draft", "active", "completed", "cancelled"), default="draft")
+
+# schemas/contract.py - Pydantic 스키마
+from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Optional
+
+class ContractBase(BaseModel):
+    project_name: str = Field(..., description="프로젝트명")
+    contract_amount: float = Field(..., description="계약금액")
+
+class ContractCreate(ContractBase):
+    pass
+
+class ContractUpdate(BaseModel):
+    project_name: Optional[str] = None
+    contract_amount: Optional[float] = None
+    status: Optional[str] = None
+
+class ContractResponse(ContractBase):
+    id: str
+    created_at: datetime
+    status: str
+    
+    class Config:
+        from_attributes = True
+
+# services/contract.py - 비즈니스 로직
+from ..models.contract import Contract
+from ..schemas.contract import ContractCreate, ContractUpdate
+from sqlalchemy.orm import Session
+
+class ContractService:
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def create_contract(self, contract_data: ContractCreate) -> Contract:
+        """계약 생성"""
+        db_contract = Contract(**contract_data.dict())
+        self.db.add(db_contract)
+        self.db.commit()
+        self.db.refresh(db_contract)
+        return db_contract
+
+# api/v1/endpoints/contracts.py - API 엔드포인트
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from ....db.database import get_db
+from ....services.contract import ContractService
+from ....schemas.contract import ContractCreate, ContractResponse
+
+router = APIRouter()
+
+@router.post("/", response_model=ContractResponse)
+def create_contract(
+    contract: ContractCreate,
+    db: Session = Depends(get_db)
+):
+    """계약 생성 API"""
+    contract_service = ContractService(db)
+    return contract_service.create_contract(contract)
+```
+
+#### 프론트엔드 구조
+```typescript
+// types/contract.ts - 타입 정의
+export interface Contract {
+  id: string;
+  projectName: string;
+  contractAmount: number;
+  status: ContractStatus;
+  createdAt: Date;
+}
+
+// services/contractService.ts - API 서비스
+import { Contract } from '../types/contract';
+
+export class ContractService {
+  private static readonly API_BASE_URL = '/api/v1/contracts';
+
+  static async createContract(contractData: Omit<Contract, 'id' | 'createdAt'>): Promise<Contract> {
+    const response = await fetch(this.API_BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(contractData),
+    });
+
+    if (!response.ok) {
+      throw new Error('계약 생성 실패');
+    }
+
+    return response.json();
+  }
+}
+
+// components/contract/ContractForm.tsx - 컴포넌트
+import React, { useState } from 'react';
+import { ContractService } from '../../services/contractService';
+
+export const ContractForm: React.FC = () => {
+  const [formData, setFormData] = useState({
+    projectName: '',
+    contractAmount: 0,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await ContractService.createContract(formData);
+      // 성공 처리
+    } catch (error) {
+      console.error('계약 생성 실패:', error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* 폼 내용 */}
+    </form>
+  );
+};
+```
+
+### 3. 문서화 원칙
+
+#### 모든 함수에 docstring 작성
+```python
+def calculate_construction_cost(
+    labor_hours: float,
+    labor_rate: float,
+    material_cost: float,
+    overhead_rate: float = 0.15
+) -> Dict[str, float]:
+    """
+    건설 비용을 계산합니다.
+    
+    Args:
+        labor_hours (float): 노동 시간
+        labor_rate (float): 시간당 노동 비용
+        material_cost (float): 재료 비용
+        overhead_rate (float, optional): 간접비율. 기본값 0.15 (15%)
+    
+    Returns:
+        Dict[str, float]: 계산된 비용 정보
+            - labor_cost: 노동 비용
+            - material_cost: 재료 비용
+            - overhead_cost: 간접비
+            - total_cost: 총 비용
+    
+    Raises:
+        ValueError: 음수 값이 입력된 경우
+        TypeError: 잘못된 타입이 입력된 경우
+    
+    Example:
+        >>> cost_info = calculate_construction_cost(100, 50000, 1000000)
+        >>> print(cost_info['total_cost'])
+        6750000.0
+    """
+    if labor_hours < 0 or labor_rate < 0 or material_cost < 0:
+        raise ValueError("비용은 음수일 수 없습니다.")
+    
+    labor_cost = labor_hours * labor_rate
+    overhead_cost = (labor_cost + material_cost) * overhead_rate
+    total_cost = labor_cost + material_cost + overhead_cost
+    
+    return {
+        "labor_cost": labor_cost,
+        "material_cost": material_cost,
+        "overhead_cost": overhead_cost,
+        "total_cost": total_cost
+    }
+```
+
+#### TypeScript 컴포넌트 문서화
+```typescript
+/**
+ * 건설 계약 카드 컴포넌트
+ * 
+ * 계약 정보를 카드 형태로 표시하며, 상태 변경 및 상세 보기 기능을 제공합니다.
+ * 
+ * @param contract - 표시할 계약 정보
+ * @param onStatusChange - 상태 변경 시 호출되는 콜백 함수
+ * @param onViewDetails - 상세 보기 시 호출되는 콜백 함수
+ * @param className - 추가 CSS 클래스명
+ * 
+ * @example
+ * ```tsx
+ * <ContractCard
+ *   contract={contractData}
+ *   onStatusChange={(newStatus) => updateContractStatus(contract.id, newStatus)}
+ *   onViewDetails={() => navigateToContractDetails(contract.id)}
+ * />
+ * ```
+ */
+export const ContractCard: React.FC<{
+  contract: Contract;
+  onStatusChange: (status: ContractStatus) => void;
+  onViewDetails: () => void;
+  className?: string;
+}> = ({ contract, onStatusChange, onViewDetails, className }) => {
+  // 컴포넌트 구현
+};
+```
+
+### 4. API 설계 규칙 (RESTful 원칙, 버전 명시)
+
+#### API 엔드포인트 설계
+```python
+# api/v1/endpoints/contracts.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from sqlalchemy.orm import Session
+
+router = APIRouter()
+
+@router.get("/", response_model=List[ContractResponse])
+async def get_contracts(
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    계약 목록 조회
+    
+    - **skip**: 건너뛸 레코드 수 (페이지네이션)
+    - **limit**: 반환할 최대 레코드 수 (기본값: 100)
+    - **status**: 필터링할 계약 상태
+    """
+    pass
+
+@router.get("/{contract_id}", response_model=ContractResponse)
+async def get_contract(contract_id: str, db: Session = Depends(get_db)):
+    """특정 계약 조회"""
+    pass
+
+@router.post("/", response_model=ContractResponse, status_code=status.HTTP_201_CREATED)
+async def create_contract(
+    contract: ContractCreate,
+    db: Session = Depends(get_db)
+):
+    """새 계약 생성"""
+    pass
+
+@router.put("/{contract_id}", response_model=ContractResponse)
+async def update_contract(
+    contract_id: str,
+    contract: ContractUpdate,
+    db: Session = Depends(get_db)
+):
+    """계약 정보 수정"""
+    pass
+
+@router.delete("/{contract_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_contract(contract_id: str, db: Session = Depends(get_db)):
+    """계약 삭제"""
+    pass
+```
+
+#### API 응답 형식 표준화
+```python
+# schemas/common.py
+from pydantic import BaseModel
+from typing import Generic, TypeVar, Optional, Any
+from datetime import datetime
+
+T = TypeVar('T')
+
+class APIResponse(BaseModel, Generic[T]):
+    """표준 API 응답 형식"""
+    success: bool
+    message: str
+    data: Optional[T] = None
+    timestamp: datetime = datetime.now()
+    error_code: Optional[str] = None
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """페이지네이션 응답 형식"""
+    items: List[T]
+    total: int
+    page: int
+    size: int
+    pages: int
+
+# 사용 예시
+@router.get("/", response_model=PaginatedResponse[ContractResponse])
+async def get_contracts(
+    page: int = 1,
+    size: int = 20,
+    db: Session = Depends(get_db)
+):
+    """계약 목록 조회 (페이지네이션)"""
+    contracts = contract_service.get_contracts(db, skip=(page-1)*size, limit=size)
+    total = contract_service.count_contracts(db)
+    
+    return PaginatedResponse(
+        items=contracts,
+        total=total,
+        page=page,
+        size=size,
+        pages=(total + size - 1) // size
+    )
+```
+
+### 5. 예외처리 방식
+
+#### 백엔드 예외처리
+```python
+# utils/exceptions.py
+from fastapi import HTTPException, status
+from typing import Any, Dict, Optional
+
+class CMAException(Exception):
+    """CMA 프로젝트 기본 예외 클래스"""
+    
+    def __init__(
+        self,
+        message: str,
+        error_code: str,
+        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        details: Optional[Dict[str, Any]] = None
+    ):
+        self.message = message
+        self.error_code = error_code
+        self.status_code = status_code
+        self.details = details or {}
+        super().__init__(self.message)
+
+class ContractNotFoundException(CMAException):
+    """계약을 찾을 수 없을 때 발생하는 예외"""
+    
+    def __init__(self, contract_id: str):
+        super().__init__(
+            message=f"계약을 찾을 수 없습니다: {contract_id}",
+            error_code="CONTRACT_NOT_FOUND",
+            status_code=status.HTTP_404_NOT_FOUND,
+            details={"contract_id": contract_id}
+        )
+
+class InvalidContractDataException(CMAException):
+    """잘못된 계약 데이터일 때 발생하는 예외"""
+    
+    def __init__(self, field: str, value: Any):
+        super().__init__(
+            message=f"잘못된 계약 데이터: {field} = {value}",
+            error_code="INVALID_CONTRACT_DATA",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            details={"field": field, "value": str(value)}
+        )
+
+# services/contract.py
+import logging
+from ..utils.exceptions import ContractNotFoundException, InvalidContractDataException
+
+logger = logging.getLogger(__name__)
+
+class ContractService:
+    def get_contract(self, contract_id: str) -> Contract:
+        """계약 조회"""
+        try:
+            contract = self.db.query(Contract).filter(Contract.id == contract_id).first()
+            if not contract:
+                logger.warning(f"계약을 찾을 수 없음: {contract_id}")
+                raise ContractNotFoundException(contract_id)
+            
+            logger.info(f"계약 조회 성공: {contract_id}")
+            return contract
+            
+        except ContractNotFoundException:
+            raise
+        except Exception as e:
+            logger.error(f"계약 조회 중 오류 발생: {contract_id}, 오류: {str(e)}")
+            raise CMAException(
+                message="계약 조회 중 오류가 발생했습니다.",
+                error_code="CONTRACT_QUERY_ERROR",
+                details={"contract_id": contract_id}
+            )
+    
+    def create_contract(self, contract_data: ContractCreate) -> Contract:
+        """계약 생성"""
+        try:
+            # 데이터 검증
+            if contract_data.contract_amount <= 0:
+                raise InvalidContractDataException("contract_amount", contract_data.contract_amount)
+            
+            # 계약 생성
+            db_contract = Contract(**contract_data.dict())
+            self.db.add(db_contract)
+            self.db.commit()
+            self.db.refresh(db_contract)
+            
+            logger.info(f"계약 생성 성공: {db_contract.id}")
+            return db_contract
+            
+        except InvalidContractDataException:
+            raise
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"계약 생성 중 오류 발생: {str(e)}")
+            raise CMAException(
+                message="계약 생성 중 오류가 발생했습니다.",
+                error_code="CONTRACT_CREATION_ERROR"
+            )
+
+# middleware/error_handler.py
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
+from ..utils.exceptions import CMAException
+
+async def cma_exception_handler(request: Request, exc: CMAException):
+    """CMA 예외 처리 미들웨어"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "message": exc.message,
+            "error_code": exc.error_code,
+            "details": exc.details,
+            "timestamp": datetime.now().isoformat()
+        }
+    )
+```
+
+#### 프론트엔드 예외처리
+```typescript
+// utils/errorHandler.ts
+export class CMAError extends Error {
+  constructor(
+    message: string,
+    public errorCode: string,
+    public statusCode: number = 500,
+    public details?: Record<string, any>
+  ) {
+    super(message);
+    this.name = 'CMAError';
+  }
+}
+
+export class ContractNotFoundError extends CMAError {
+  constructor(contractId: string) {
+    super(
+      `계약을 찾을 수 없습니다: ${contractId}`,
+      'CONTRACT_NOT_FOUND',
+      404,
+      { contractId }
+    );
+  }
+}
+
+// services/apiClient.ts
+export class ApiClient {
+  private static async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      
+      switch (response.status) {
+        case 404:
+          throw new ContractNotFoundError(errorData.details?.contract_id || 'unknown');
+        case 400:
+          throw new CMAError(
+            errorData.message || '잘못된 요청입니다.',
+            errorData.error_code || 'BAD_REQUEST',
+            400,
+            errorData.details
+          );
+        case 500:
+          throw new CMAError(
+            errorData.message || '서버 오류가 발생했습니다.',
+            errorData.error_code || 'INTERNAL_SERVER_ERROR',
+            500,
+            errorData.details
+          );
+        default:
+          throw new CMAError(
+            errorData.message || '알 수 없는 오류가 발생했습니다.',
+            errorData.error_code || 'UNKNOWN_ERROR',
+            response.status,
+            errorData.details
+          );
+      }
+    }
+    
+    return response.json();
+  }
+
+  static async get<T>(url: string): Promise<T> {
+    try {
+      const response = await fetch(url);
+      return this.handleResponse<T>(response);
+    } catch (error) {
+      console.error('API 요청 실패:', error);
+      throw error;
+    }
+  }
+
+  static async post<T>(url: string, data: any): Promise<T> {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse<T>(response);
+    } catch (error) {
+      console.error('API 요청 실패:', error);
+      throw error;
+    }
+  }
+}
+
+// components/ErrorBoundary.tsx
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { CMAError } from '../utils/errorHandler';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary에서 오류 발생:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <div className="error-boundary">
+          <h2>오류가 발생했습니다</h2>
+          <p>{this.state.error?.message}</p>
+          <button onClick={() => this.setState({ hasError: false })}>
+            다시 시도
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+## 📋 추가 규칙
+
+### 6. 데이터베이스 모델 설계
+```python
+# models/base.py
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, DateTime, String
+from sqlalchemy.sql import func
+
+Base = declarative_base()
+
+class TimestampMixin:
+    """타임스탬프 믹스인"""
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+class SoftDeleteMixin:
+    """소프트 삭제 믹스인"""
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+```
+
+### 7. 환경 설정 관리
+```python
+# core/config.py
+from pydantic_settings import BaseSettings
+from typing import Optional
+
+class Settings(BaseSettings):
+    """애플리케이션 설정"""
+    
+    # 데이터베이스 설정
+    database_url: str = "postgresql://user:password@localhost/cma_db"
+    
+    # 보안 설정
+    secret_key: str = "your-secret-key"
+    access_token_expire_minutes: int = 30
+    
+    # 파일 업로드 설정
+    upload_dir: str = "./uploads"
+    max_file_size: int = 10 * 1024 * 1024  # 10MB
+    
+    # 로깅 설정
+    log_level: str = "INFO"
+    log_file: str = "./logs/cma.log"
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+settings = Settings()
+```
+
+### 8. 테스트 코드 작성
+```python
+# tests/test_contract_service.py
+import pytest
+from unittest.mock import Mock, patch
+from app.services.contract import ContractService
+from app.schemas.contract import ContractCreate
+from app.utils.exceptions import ContractNotFoundException
+
+class TestContractService:
+    @pytest.fixture
+    def mock_db(self):
+        return Mock()
+    
+    @pytest.fixture
+    def contract_service(self, mock_db):
+        return ContractService(mock_db)
+    
+    def test_create_contract_success(self, contract_service, mock_db):
+        """계약 생성 성공 테스트"""
+        # Given
+        contract_data = ContractCreate(
+            project_name="테스트 프로젝트",
+            contract_amount=1000000
+        )
+        mock_contract = Mock()
+        mock_contract.id = "test-id"
+        mock_db.add.return_value = None
+        mock_db.commit.return_value = None
+        mock_db.refresh.return_value = None
+        
+        # When
+        result = contract_service.create_contract(contract_data)
+        
+        # Then
+        assert result.id == "test-id"
+        mock_db.add.assert_called_once()
+        mock_db.commit.assert_called_once()
+    
+    def test_get_contract_not_found(self, contract_service, mock_db):
+        """계약 조회 실패 테스트"""
+        # Given
+        contract_id = "non-existent-id"
+        mock_db.query.return_value.filter.return_value.first.return_value = None
+        
+        # When & Then
+        with pytest.raises(ContractNotFoundException):
+            contract_service.get_contract(contract_id)
+```
+
+### 9. 개발 워크플로우
+
+#### Git 브랜치 전략
+```bash
+# 메인 브랜치
+main                    # 프로덕션 배포용
+develop                 # 개발 통합용
+
+# 기능 브랜치
+feature/contract-management    # 계약 관리 기능
+feature/financial-reporting    # 재무 보고서 기능
+feature/labor-cost-tracking    # 노무비 추적 기능
+
+# 수정 브랜치
+hotfix/critical-bug-fix        # 긴급 버그 수정
+bugfix/contract-validation     # 계약 검증 버그 수정
+
+# 릴리즈 브랜치
+release/v1.2.0                 # v1.2.0 릴리즈 준비
+```
+
+#### 커밋 메시지 규칙
+```bash
+# 형식: <type>(<scope>): <description>
+
+# 타입
+feat: 새로운 기능 추가
+fix: 버그 수정
+docs: 문서 수정
+style: 코드 포맷팅 (기능 변경 없음)
+refactor: 코드 리팩토링
+test: 테스트 코드 추가/수정
+chore: 빌드 프로세스 또는 보조 도구 변경
+
+# 예시
+feat(contract): 계약 생성 API 엔드포인트 추가
+fix(financial): 재무 계산 오류 수정
+docs(api): API 문서 업데이트
+refactor(service): 계약 서비스 리팩토링
+test(contract): 계약 생성 테스트 추가
+```
+
+#### 코드 리뷰 체크리스트
+```markdown
+## 코드 리뷰 체크리스트
+
+### 기능적 검토
+- [ ] 요구사항을 정확히 구현했는가?
+- [ ] 에러 처리가 적절한가?
+- [ ] 입력값 검증이 충분한가?
+- [ ] 보안 취약점은 없는가?
+
+### 코드 품질
+- [ ] 코드 스타일이 일관적인가?
+- [ ] 함수/클래스가 단일 책임을 가지는가?
+- [ ] 중복 코드가 없는가?
+- [ ] 변수명이 명확한가?
+
+### 성능
+- [ ] 불필요한 데이터베이스 쿼리가 없는가?
+- [ ] 메모리 누수 가능성은 없는가?
+- [ ] 알고리즘 효율성이 적절한가?
+
+### 테스트
+- [ ] 단위 테스트가 작성되었는가?
+- [ ] 테스트 커버리지가 충분한가?
+- [ ] 통합 테스트가 필요한가?
+
+### 문서화
+- [ ] 함수/클래스에 docstring이 있는가?
+- [ ] API 문서가 업데이트되었는가?
+- [ ] README가 수정되었는가?
+```
+
+### 10. 배포 규칙
+
+#### 환경별 설정
+```python
+# core/environments.py
+from enum import Enum
+from typing import Dict, Any
+
+class Environment(Enum):
+    DEVELOPMENT = "development"
+    STAGING = "staging"
+    PRODUCTION = "production"
+
+class EnvironmentConfig:
+    """환경별 설정 관리"""
+    
+    @staticmethod
+    def get_config(env: Environment) -> Dict[str, Any]:
+        configs = {
+            Environment.DEVELOPMENT: {
+                "debug": True,
+                "database_url": "postgresql://dev:dev@localhost/cma_dev",
+                "log_level": "DEBUG",
+                "cors_origins": ["http://localhost:3000"],
+            },
+            Environment.STAGING: {
+                "debug": False,
+                "database_url": "postgresql://staging:staging@staging-db/cma_staging",
+                "log_level": "INFO",
+                "cors_origins": ["https://staging.cma.com"],
+            },
+            Environment.PRODUCTION: {
+                "debug": False,
+                "database_url": "postgresql://prod:prod@prod-db/cma_prod",
+                "log_level": "WARNING",
+                "cors_origins": ["https://cma.com"],
+            }
+        }
+        return configs[env]
+```
+
+#### 배포 스크립트
+```bash
+#!/bin/bash
+# scripts/deploy.sh
+
+set -e
+
+ENVIRONMENT=$1
+VERSION=$2
+
+if [ -z "$ENVIRONMENT" ] || [ -z "$VERSION" ]; then
+    echo "Usage: ./deploy.sh <environment> <version>"
+    echo "Example: ./deploy.sh staging v1.2.0"
+    exit 1
+fi
+
+echo "🚀 배포 시작: $ENVIRONMENT 환경, 버전 $VERSION"
+
+# 1. 환경 검증
+echo "📋 환경 검증 중..."
+if [ "$ENVIRONMENT" != "staging" ] && [ "$ENVIRONMENT" != "production" ]; then
+    echo "❌ 잘못된 환경: $ENVIRONMENT"
+    exit 1
+fi
+
+# 2. 데이터베이스 마이그레이션
+echo "🗄️ 데이터베이스 마이그레이션 중..."
+cd backend
+alembic upgrade head
+
+# 3. 백엔드 배포
+echo "🔧 백엔드 배포 중..."
+pip install -r requirements.txt
+python -m pytest tests/ -v
+
+# 4. 프론트엔드 빌드
+echo "🎨 프론트엔드 빌드 중..."
+cd ../frontend
+npm ci
+npm run build
+
+# 5. Tauri 앱 빌드
+echo "📱 Tauri 앱 빌드 중..."
+npm run tauri build
+
+# 6. 배포 완료
+echo "✅ 배포 완료: $ENVIRONMENT 환경, 버전 $VERSION"
+```
+
+### 11. 모니터링 및 로깅
+
+#### 로깅 설정
+```python
+# core/logging.py
+import logging
+import logging.handlers
+from pathlib import Path
+from datetime import datetime
+
+def setup_logging(log_level: str = "INFO", log_file: str = "./logs/cma.log"):
+    """로깅 설정"""
+    
+    # 로그 디렉토리 생성
+    log_path = Path(log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # 로그 포맷 설정
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # 파일 핸들러 (일별 로테이션)
+    file_handler = logging.handlers.TimedRotatingFileHandler(
+        log_file,
+        when='midnight',
+        interval=1,
+        backupCount=30,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(formatter)
+    
+    # 콘솔 핸들러
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    
+    # 루트 로거 설정
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, log_level.upper()))
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+    
+    # 특정 모듈 로그 레벨 설정
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+    logging.getLogger('uvicorn.access').setLevel(logging.INFO)
+```
+
+#### 성능 모니터링
+```python
+# middleware/performance.py
+import time
+import logging
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+
+logger = logging.getLogger(__name__)
+
+class PerformanceMiddleware(BaseHTTPMiddleware):
+    """성능 모니터링 미들웨어"""
+    
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        
+        # 요청 처리
+        response = await call_next(request)
+        
+        # 처리 시간 계산
+        process_time = time.time() - start_time
+        
+        # 로그 기록
+        logger.info(
+            f"요청 처리 완료: {request.method} {request.url.path} - "
+            f"상태코드: {response.status_code}, "
+            f"처리시간: {process_time:.3f}초"
+        )
+        
+        # 응답 헤더에 처리 시간 추가
+        response.headers["X-Process-Time"] = str(process_time)
+        
+        return response
+```
+
+이러한 규칙들을 따라 CMA 프로젝트의 코드 품질과 일관성을 유지하세요.
