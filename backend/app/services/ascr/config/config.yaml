@@ -1,0 +1,57 @@
+# ASCR 설정 파일
+# YAML 기반 설정으로 가독성과 유지보수성 향상
+
+# PDF 처리 설정
+pdf_processing:
+  max_pages_per_file: 1000
+  supported_formats: [".pdf"]
+  temp_dir: "temp"
+  log_dir: "logs"
+  batch_size: 50
+  timeout_seconds: 300
+
+# OCR 설정
+ocr_settings:
+  tesseract_path: null  # 자동 감지
+  poppler_path: null    # 자동 감지
+  language: "kor+eng"
+  confidence_threshold: 60
+  enable_ocr: false
+
+# 출력 형식 설정
+output_formats:
+  - csv
+  - excel
+  - json
+  default_format: "excel"
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_rotation:
+    max_size_mb: 10
+    backup_count: 5
+  console_output: true
+  file_output: true
+
+# 성능 설정
+performance:
+  max_workers: 4
+  memory_limit_mb: 1024
+  cache_enabled: true
+  cache_ttl_hours: 24
+
+# 검증 설정
+validation:
+  strict_mode: false
+  check_file_integrity: true
+  validate_output: true
+  max_file_size_mb: 100
+
+# UI 설정
+ui:
+  show_progress: true
+  progress_bar_style: "tqdm"
+  confirm_actions: true
+  auto_save: true 
