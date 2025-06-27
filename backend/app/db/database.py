@@ -8,19 +8,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# 데이터베이스 성능 모니터링을 위한 이벤트 리스너
-@event.listens_for(engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    conn.info.setdefault('query_start_time', []).append(time.time())
-    logger.debug("Query: %s", statement)
-
-@event.listens_for(engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    total = time.time() - conn.info['query_start_time'].pop()
-    logger.debug("Query Complete! Total Time: %f", total)
-    if total > 0.5:  # 500ms 이상 걸리는 쿼리 로깅
-        logger.warning("Slow Query Detected: %s", statement)
-
 # PostgreSQL 데이터베이스 엔진 생성 (성능 최적화 설정 포함)
 engine = create_engine(
     settings.SQLALCHEMY_DATABASE_URI,
@@ -34,6 +21,19 @@ engine = create_engine(
         "isolation_level": "READ COMMITTED"  # 격리 수준 설정
     }
 )
+
+# 데이터베이스 성능 모니터링을 위한 이벤트 리스너
+@event.listens_for(engine, "before_cursor_execute")
+def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    conn.info.setdefault('query_start_time', []).append(time.time())
+    logger.debug("Query: %s", statement)
+
+@event.listens_for(engine, "after_cursor_execute")
+def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    total = time.time() - conn.info['query_start_time'].pop()
+    logger.debug("Query Complete! Total Time: %f", total)
+    if total > 0.5:  # 500ms 이상 걸리는 쿼리 로깅
+        logger.warning("Slow Query Detected: %s", statement)
 
 # 세션 팩토리 생성 (성능 최적화 설정 포함)
 SessionLocal = sessionmaker(

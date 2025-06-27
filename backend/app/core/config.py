@@ -35,7 +35,7 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    # 데이터베이스 설정
+    # 데이터베이스 설정 (개발 환경에서는 SQLite 사용)
     USE_LOCAL_DB: bool = True
     POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
@@ -64,23 +64,31 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # 기본 데이터베이스 URI 설정
-        if not self.SQLALCHEMY_DATABASE_URI:
-            self.SQLALCHEMY_DATABASE_URI = (
-                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-                f"@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
-            )
+        # 개발 환경에서는 SQLite 사용
+        if self.USE_LOCAL_DB:
+            self.SQLALCHEMY_DATABASE_URI = "sqlite:///./construction_management.db"
+        else:
+            # PostgreSQL 사용
+            if not self.SQLALCHEMY_DATABASE_URI:
+                self.SQLALCHEMY_DATABASE_URI = (
+                    f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                    f"@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+                )
         
         # 샤드 데이터베이스 URI 설정
         if self.ENABLE_SHARDING:
-            self.SHARD_1_DATABASE_URI = (
-                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-                f"@{self.POSTGRES_SERVER}/{self.SHARD_1_DB}"
-            )
-            self.SHARD_2_DATABASE_URI = (
-                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-                f"@{self.POSTGRES_SERVER}/{self.SHARD_2_DB}"
-            )
+            if self.USE_LOCAL_DB:
+                self.SHARD_1_DATABASE_URI = "sqlite:///./construction_management_shard1.db"
+                self.SHARD_2_DATABASE_URI = "sqlite:///./construction_management_shard2.db"
+            else:
+                self.SHARD_1_DATABASE_URI = (
+                    f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                    f"@{self.POSTGRES_SERVER}/{self.SHARD_1_DB}"
+                )
+                self.SHARD_2_DATABASE_URI = (
+                    f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                    f"@{self.POSTGRES_SERVER}/{self.SHARD_2_DB}"
+                )
 
     # JWT 설정
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key")
