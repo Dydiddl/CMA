@@ -17,6 +17,7 @@ const ProjectList = React.lazy(() => import('./pages/ProjectList'));
 const ProjectDetail = React.lazy(() => import('./pages/ProjectDetail'));
 const TaskList = React.lazy(() => import('./pages/TaskList'));
 const TaskDetail = React.lazy(() => import('./pages/TaskDetail'));
+const ASCR = React.lazy(() => import('./pages/ASCR'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -40,6 +41,7 @@ const App: React.FC = () => {
                   <Route path="/projects/:id" element={<ProjectDetail />} />
                   <Route path="/tasks" element={<TaskList />} />
                   <Route path="/tasks/:id" element={<TaskDetail />} />
+                  <Route path="/ascr" element={<ASCR />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

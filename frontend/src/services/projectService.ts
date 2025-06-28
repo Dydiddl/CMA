@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Project, ProjectFormData } from '../types/project';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://localhost:8000/api/v1';
 
 const projectService = {
   getProjects: async (): Promise<Project[]> => {
