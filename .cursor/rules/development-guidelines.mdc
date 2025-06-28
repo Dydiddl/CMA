@@ -1,0 +1,279 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🧠 Cursor AI 개발 규칙서
+
+이 문서는 Cursor AI가 이 프로젝트에서 일관되고 효율적으로 코드를 작성하기 위한 규칙을 정의합니다.
+
+---
+
+## 📁 프로젝트 구조 규칙
+
+### 디렉토리 구조
+```
+project-root/
+├── backend/                 # FastAPI 백엔드
+│   ├── app/
+│   │   ├── api/            # API 라우터
+│   │   ├── core/           # 인증, 설정, 보안
+│   │   ├── models/         # SQLAlchemy ORM 모델
+│   │   ├── schemas/        # Pydantic 요청/응답 모델
+│   │   ├── services/       # 비즈니스 로직 계층
+│   │   └── main.py         # 앱 진입점
+│   └── requirements.txt
+├── frontend/               # React + Tauri 프론트엔드
+├── docs/                   # 문서, ERD, 스키마 정의
+├── scripts/                # 마이그레이션, 초기화 등 유틸 스크립트
+└── README.md
+```
+
+### 파일 명명 규칙
+- **Python**: snake_case (contract_service.py, user_model.py)
+- **TypeScript**: camelCase (contractService.ts, userModel.ts)
+- **컴포넌트**: PascalCase (ContractForm.tsx, UserList.tsx)
+
+---
+
+## 🧩 코드 스타일 규칙
+
+### Python 코드 규칙
+- **PEP8** + `black` + `isort`로 포맷팅
+- ORM 모델: snake_case 필드 사용, SQLAlchemy Base 상속
+- API 스키마: `Pydantic` 사용, 모든 응답은 표준화된 구조 사용
+- 모든 함수와 클래스에 docstring 작성
+- 타입 힌트 명시적 사용
+
+### TypeScript 코드 규칙
+- `camelCase` 사용
+- 타입 정의는 가능한 한 명시적으로
+- `Prettier` + `ESLint` 적용
+- 모든 함수와 컴포넌트에 JSDoc 주석 작성
+- Interface와 Type 명확히 구분
+
+---
+
+## 📡 API 규칙
+
+### 엔드포인트 구성
+- 모든 API는 `/api/v1/` 하위로 작성
+- 예: `/api/v1/contracts`, `/api/v1/labor`
+- HTTP 메서드 명확히 구분 (GET, POST, PUT, DELETE)
+
+### 공통 응답 구조
+```json
+{
+  "status": "success",    // 또는 "error"
+  "data": {},            // 응답 데이터
+  "message": null        // 사용자 메시지
+}
+```
+
+### 에러 응답 구조
+```json
+{
+  "status": "error",
+  "data": null,
+  "message": "계약서 ID가 존재하지 않습니다."
+}
+```
+
+### API 작성 시 필수 사항
+- 모든 엔드포인트에 적절한 HTTP 상태 코드 사용
+- 입력 데이터 검증 (Pydantic 스키마 활용)
+- 에러 핸들링 및 로깅
+- API 문서화 (FastAPI 자동 문서화 활용)
+
+---
+
+## ⚙️ 모델/스키마 규칙
+
+### 명명 규칙
+- **클래스명**: PascalCase (Contract, LaborCost)
+- **필드명**: snake_case (project_id, start_date)
+- **관계 필드**: _id 접미사 사용 (contractor_id)
+
+### 관계 정의
+- SQLAlchemy에서 ForeignKey, relationship() 명확히 정의
+- 모든 관계 모델은 `docs/architecture/comprehensive-schema-relationship.md`에 기록
+- 양방향 관계 설정 시 back_populates 사용
+
+### 모델 작성 시 필수 사항
+```python
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from app.models.base import BaseModel
+
+class Contract(BaseModel):
+    __tablename__ = "contracts"
+    
+    name = Column(String, nullable=False, index=True)
+    contract_number = Column(String, unique=True, nullable=False, index=True)
+    contract_amount = Column(Float, nullable=False)
+    vendor_id = Column(String, ForeignKey("vendors.id"), nullable=False)
+    
+    # 관계 설정
+    vendor = relationship("Vendor", back_populates="contracts")
+    documents = relationship("ContractDocument", back_populates="contract")
+```
+
+---
+
+## 📂 커밋 & 브랜치 규칙
+
+### 브랜치 전략
+- `main`: 배포 대상, 항상 안정된 상태 유지
+- `dev`: 개발 통합
+- `feature/xxx`: 기능 개발
+- `fix/xxx`: 버그 수정
+- `docs/xxx`: 문서 변경
+
+### 커밋 메시지 스타일 (Conventional Commits)
+```
+feat: 계약 생성 API 추가
+fix: 계약 삭제 오류 수정
+refactor: 인증 모듈 구조 개선
+docs: 사용법 문서 작성
+test: 계약 API 테스트 추가
+style: 코드 포맷팅 수정
+```
+
+---
+
+## 🧪 테스트 규칙
+
+### 테스트 프레임워크
+- **백엔드**: pytest
+- **프론트엔드**: Jest + React Testing Library
+
+### 테스트 파일 위치
+- 각 기능 단위 테스트 파일 위치: `backend/tests/` 내부
+- API 테스트는 TestClient 사용
+- 커버리지는 최소 70% 이상 유지
+
+### 테스트 작성 시 필수 사항
+```python
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_create_contract():
+    """계약 생성 API 테스트"""
+    response = client.post(
+        "/api/v1/contracts/",
+        json={
+            "name": "테스트 계약",
+            "contract_number": "CON-2024-001",
+            "contract_amount": 1000000
+        }
+    )
+    assert response.status_code == 201
+    assert response.json()["status"] == "success"
+```
+
+---
+
+## 🤖 Cursor AI 사용 예시
+
+### 작업 지시 예시
+```
+# 모델 생성
+"backend/app/models/contract.py에서 Contract 모델을 생성하고, 
+관련 Pydantic 스키마도 backend/app/schemas/contract.py에 만들어줘"
+
+# API 엔드포인트 생성
+"backend/app/api/v1/endpoints/contracts.py에 계약 CRUD API를 작성해줘"
+
+# 프론트엔드 컴포넌트 생성
+"frontend/src/components/contract/ContractForm.tsx에서 계약 등록 폼을 만들어줘"
+
+# 테스트 코드 생성
+"backend/tests/api/test_contracts.py에 계약 API 테스트를 작성해줘"
+```
+
+### 코드 생성 시 지켜야 할 사항
+- 항상 기존 프로젝트 구조와 스타일을 따라야 함
+- 새로운 기능 추가 시 관련 문서도 함께 업데이트
+- 에러 핸들링과 검증 로직을 포함해야 함
+- 타입 안전성을 보장해야 함
+
+---
+
+## 📅 워크플로우
+
+### 개발 프로세스
+1. 이슈 등록 → 브랜치 생성 (feature/계약_등록_API)
+2. 기능 개발 (테스트 포함)
+3. dev 브랜치로 PR 제출
+4. 코드리뷰 후 머지 → main으로 릴리즈는 따로 진행
+5. 문서 업데이트 (docs/README.md, docs/schema.md)
+
+### 스키마 변경 시
+1. `docs/architecture/comprehensive-schema-relationship.md` 업데이트
+2. 마이그레이션 스크립트 작성
+3. 모델 및 스키마 코드 수정
+4. API 엔드포인트 수정
+5. 프론트엔드 컴포넌트 수정
+6. 테스트 코드 업데이트
+
+---
+
+## 📌 기타 사항
+
+### 인증 및 보안
+- Supabase 인증 연동은 `auth_service.py`에서 관리
+- 모든 API 엔드포인트에 적절한 인증/권한 검증 추가
+- 민감한 데이터는 암호화 처리
+
+### 데이터 구조
+- 모든 계약서, 거래처 등 실물 데이터의 구조는 표준품셈과 매핑되도록 유지
+- 향후 Excel 자동화를 고려한 `xlsx_generator.py`를 분리 구현
+
+### 성능 최적화
+- 데이터베이스 쿼리 최적화 (N+1 문제 방지)
+- 적절한 인덱스 설정
+- 캐싱 전략 수립
+
+### 문서화
+- 모든 주요 기능에 대한 문서 작성
+- API 문서는 FastAPI 자동 생성 활용
+- 코드 주석은 한글로 작성
+
+---
+
+## 🔧 개발 환경 설정
+
+### 필수 도구
+- Python 3.12+
+- Node.js 18+
+- PostgreSQL 14+
+- Git
+
+### 개발 환경 설정
+```bash
+# 백엔드 설정
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 프론트엔드 설정
+cd frontend
+npm install
+```
+
+### 코드 포맷팅
+```bash
+# Python
+black .
+isort .
+
+# TypeScript
+npm run format
+npm run lint
+```
+
+이 규칙을 따라 일관되고 유지보수 가능한 코드를 작성하세요. 
