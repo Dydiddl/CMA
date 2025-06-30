@@ -1,20 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+API v1 라우터
+CMA 시스템의 모든 API 엔드포인트를 통합 관리
+"""
+
 from fastapi import APIRouter
-from .endpoints import (
-    auth,
-    users,
-    contracts,
-    labor,
-    vendors,
-    finance,
-    dashboard
-)
+from app.api.v1.endpoints import projects, tasks
 
 api_router = APIRouter()
 
-api_router.include_router(auth.router, prefix="/auth", tags=["인증"])
-api_router.include_router(users.router, prefix="/users", tags=["사용자"])
-api_router.include_router(contracts.router, prefix="/contracts", tags=["계약 관리"])
-api_router.include_router(labor.router, prefix="/labor", tags=["인력 관리"])
-api_router.include_router(vendors.router, prefix="/vendors", tags=["거래처 관리"])
-api_router.include_router(finance.router, prefix="/finance", tags=["재무 관리"])
-api_router.include_router(dashboard.router, prefix="/dashboard", tags=["대시보드"]) 
+# 프로젝트 관련 엔드포인트
+api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
+
+# 작업 관련 엔드포인트
+api_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+
+# 향후 추가될 엔드포인트들
+# api_router.include_router(contracts.router, prefix="/contracts", tags=["contracts"])
+# api_router.include_router(financial.router, prefix="/financial", tags=["financial"])
+# api_router.include_router(labor.router, prefix="/labor", tags=["labor"])
+# api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
+# api_router.include_router(ascr.router, prefix="/ascr", tags=["ascr"]) 
