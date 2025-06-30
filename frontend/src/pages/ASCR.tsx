@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -14,88 +14,241 @@ import {
   CircularProgress,
   Grid,
   Paper,
+  LinearProgress,
+  Snackbar,
+  Chip,
 } from '@mui/material';
-import { Upload as UploadIcon, Download as DownloadIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { 
+  Upload as UploadIcon, 
+  Download as DownloadIcon, 
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon
+} from '@mui/icons-material';
 import ascrService, { TOCStructure, PDFExtractionResult, StandardPriceResult, ValidationResult } from '../services/ascrService';
 
 const ASCR: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [year, setYear] = useState<number>(2025);
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
+  const [progress, setProgress] = useState<number>(0);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity: 'success' | 'error' | 'info'}>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
+
+  const showSnackbar = useCallback((message: string, severity: 'success' | 'error' | 'info' = 'info') => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 50 * 1024 * 1024) { // 50MB 제한
+        setError('파일 크기가 50MB를 초과합니다.');
+        showSnackbar('파일 크기 제한: 50MB', 'error');
+        return;
+      }
       setSelectedFile(file);
       setError(null);
+      showSnackbar('파일이 선택되었습니다.', 'success');
     }
   };
+
+  const startLoading = useCallback((message: string) => {
+    setLoading(true);
+    setLoadingMessage(message);
+    setProgress(0);
+    setError(null);
+  }, []);
+
+  const updateProgress = useCallback((progress: number) => {
+    setProgress(progress);
+  }, []);
+
+  const stopLoading = useCallback(() => {
+    setLoading(false);
+    setLoadingMessage('');
+    setProgress(0);
+  }, []);
 
   const handleExtractTOC = async () => {
     if (!selectedFile) {
       setError('파일을 선택해주세요.');
+      showSnackbar('파일을 선택해주세요.', 'error');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    startLoading('목차 구조를 추출하는 중...');
+    
     try {
+      // 진행률 시뮬레이션
+      const progressInterval = setInterval(() => {
+        updateProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       const tocResult = await ascrService.extractTOC(selectedFile, year);
+      
+      clearInterval(progressInterval);
+      updateProgress(100);
+      
       setResult({ type: 'toc', data: tocResult });
+      showSnackbar('목차 추출이 완료되었습니다.', 'success');
     } catch (err) {
       setError('목차 추출에 실패했습니다.');
+      showSnackbar('목차 추출 실패', 'error');
       console.error(err);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const handleExtractText = async () => {
     if (!selectedFile) {
       setError('파일을 선택해주세요.');
+      showSnackbar('파일을 선택해주세요.', 'error');
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    startLoading('텍스트를 추출하는 중...');
+    
     try {
+      const progressInterval = setInterval(() => {
+        updateProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 15;
+        });
+      }, 150);
+
       const textResult = await ascrService.extractText(selectedFile);
+      
+      clearInterval(progressInterval);
+      updateProgress(100);
+      
       setResult({ type: 'text', data: textResult });
+      showSnackbar('텍스트 추출이 완료되었습니다.', 'success');
     } catch (err) {
       setError('텍스트 추출에 실패했습니다.');
+      showSnackbar('텍스트 추출 실패', 'error');
       console.error(err);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const handleDownloadStandardPrice = async () => {
-    setLoading(true);
-    setError(null);
+    startLoading('표준 가격 목록을 다운로드하는 중...');
+    
     try {
+      const progressInterval = setInterval(() => {
+        updateProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 20;
+        });
+      }, 300);
+
       const priceResult = await ascrService.downloadStandardPrice(year);
+      
+      clearInterval(progressInterval);
+      updateProgress(100);
+      
       setResult({ type: 'standard_price', data: priceResult });
+      showSnackbar('표준 가격 목록 다운로드가 완료되었습니다.', 'success');
     } catch (err) {
       setError('표준 가격 목록 다운로드에 실패했습니다.');
+      showSnackbar('다운로드 실패', 'error');
       console.error(err);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const handleValidatePriceList = async () => {
-    setLoading(true);
-    setError(null);
+    startLoading('표준 가격 목록을 검증하는 중...');
+    
     try {
+      const progressInterval = setInterval(() => {
+        updateProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 25;
+        });
+      }, 250);
+
       const validationResult = await ascrService.validatePriceList(year);
+      
+      clearInterval(progressInterval);
+      updateProgress(100);
+      
       setResult({ type: 'validation', data: validationResult });
+      showSnackbar('검증이 완료되었습니다.', 'success');
     } catch (err) {
       setError('표준 가격 목록 검증에 실패했습니다.');
+      showSnackbar('검증 실패', 'error');
       console.error(err);
     } finally {
-      setLoading(false);
+      stopLoading();
+    }
+  };
+
+  const handleSplitPDF = async () => {
+    if (!selectedFile) {
+      setError('파일을 선택해주세요.');
+      showSnackbar('파일을 선택해주세요.', 'error');
+      return;
+    }
+
+    // 목차 구조가 필요하므로 먼저 목차 추출
+    if (!result || result.type !== 'toc') {
+      setError('PDF 분할을 위해서는 먼저 목차를 추출해야 합니다.');
+      showSnackbar('먼저 목차를 추출해주세요.', 'error');
+      return;
+    }
+
+    startLoading('PDF를 분할하는 중...');
+    
+    try {
+      const progressInterval = setInterval(() => {
+        updateProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 20;
+        });
+      }, 200);
+
+      const splitResult = await ascrService.splitPDF(selectedFile, result.data.structure);
+      
+      clearInterval(progressInterval);
+      updateProgress(100);
+      
+      setResult({ type: 'split', data: splitResult });
+      showSnackbar('PDF 분할이 완료되었습니다.', 'success');
+    } catch (err) {
+      setError('PDF 분할에 실패했습니다.');
+      showSnackbar('PDF 분할 실패', 'error');
+      console.error(err);
+    } finally {
+      stopLoading();
     }
   };
 
@@ -163,6 +316,18 @@ const ASCR: React.FC = () => {
                 ))}
               </Box>
             )}
+          </Paper>
+        );
+      case 'split':
+        return (
+          <Paper sx={{ p: 2, mt: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              PDF 분할 결과
+            </Typography>
+            <Typography>분할된 파일 개수: {result.data.length}</Typography>
+            {result.data.map((file: string, index: number) => (
+              <Typography key={index} variant="body2">• {file}</Typography>
+            ))}
           </Paper>
         );
       default:
@@ -275,6 +440,14 @@ const ASCR: React.FC = () => {
                   startIcon={loading ? <CircularProgress size={20} /> : <CheckCircleIcon />}
                 >
                   표준 가격 목록 검증
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSplitPDF}
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={20} /> : <CheckCircleIcon />}
+                >
+                  PDF 분할
                 </Button>
               </Box>
             </CardContent>

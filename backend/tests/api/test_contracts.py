@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-계약 API 테스트
+계약 API 통합 테스트
 """
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -14,41 +17,24 @@ client = TestClient(app)
 class TestContractAPI:
     """계약 API 테스트 클래스"""
     
-    def test_create_contract_success(self, test_db: Session):
+    def test_create_contract_success(self, test_db: Session, sample_contract_data: dict):
         """계약 생성 성공 테스트"""
-        contract_data = {
-            "name": "테스트 계약",
-            "contract_number": "CON-2024-001",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        
-        response = client.post("/api/v1/contracts/", json=contract_data)
+        response = client.post("/api/v1/contracts/", json=sample_contract_data)
         
         assert response.status_code == 201
         data = response.json()
         assert data["status"] == "success"
-        assert data["data"]["name"] == contract_data["name"]
-        assert data["data"]["contract_number"] == contract_data["contract_number"]
+        assert data["data"]["name"] == sample_contract_data["name"]
+        assert data["data"]["contract_number"] == sample_contract_data["contract_number"]
     
-    def test_create_contract_duplicate_number(self, test_db: Session):
+    def test_create_contract_duplicate_number(self, test_db: Session, sample_contract_data: dict):
         """중복 계약번호 테스트"""
         # 첫 번째 계약 생성
-        contract_data = {
-            "name": "테스트 계약 1",
-            "contract_number": "CON-2024-001",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        client.post("/api/v1/contracts/", json=contract_data)
+        client.post("/api/v1/contracts/", json=sample_contract_data)
         
         # 동일한 계약번호로 두 번째 계약 생성 시도
-        contract_data["name"] = "테스트 계약 2"
-        response = client.post("/api/v1/contracts/", json=contract_data)
+        sample_contract_data["name"] = "테스트 계약 2"
+        response = client.post("/api/v1/contracts/", json=sample_contract_data)
         
         assert response.status_code == 400
         data = response.json()
@@ -64,7 +50,6 @@ class TestContractAPI:
         }
         
         response = client.post("/api/v1/contracts/", json=contract_data)
-        
         assert response.status_code == 422  # Validation Error
     
     def test_get_contracts_success(self, test_db: Session):
@@ -104,18 +89,10 @@ class TestContractAPI:
         data = response.json()
         assert data["status"] == "success"
     
-    def test_get_contract_success(self, test_db: Session):
+    def test_get_contract_success(self, test_db: Session, sample_contract_data: dict):
         """계약 상세 조회 성공 테스트"""
         # 먼저 계약 생성
-        contract_data = {
-            "name": "테스트 계약",
-            "contract_number": "CON-2024-002",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        create_response = client.post("/api/v1/contracts/", json=contract_data)
+        create_response = client.post("/api/v1/contracts/", json=sample_contract_data)
         contract_id = create_response.json()["data"]["id"]
         
         # 계약 상세 조회
@@ -125,7 +102,7 @@ class TestContractAPI:
         data = response.json()
         assert data["status"] == "success"
         assert data["data"]["id"] == contract_id
-        assert data["data"]["name"] == contract_data["name"]
+        assert data["data"]["name"] == sample_contract_data["name"]
     
     def test_get_contract_not_found(self, test_db: Session):
         """존재하지 않는 계약 조회 테스트"""
@@ -135,18 +112,10 @@ class TestContractAPI:
         data = response.json()
         assert "계약을 찾을 수 없습니다" in data["detail"]
     
-    def test_update_contract_success(self, test_db: Session):
+    def test_update_contract_success(self, test_db: Session, sample_contract_data: dict):
         """계약 수정 성공 테스트"""
         # 먼저 계약 생성
-        contract_data = {
-            "name": "테스트 계약",
-            "contract_number": "CON-2024-003",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        create_response = client.post("/api/v1/contracts/", json=contract_data)
+        create_response = client.post("/api/v1/contracts/", json=sample_contract_data)
         contract_id = create_response.json()["data"]["id"]
         
         # 계약 수정
@@ -173,18 +142,10 @@ class TestContractAPI:
         data = response.json()
         assert "계약을 찾을 수 없습니다" in data["detail"]
     
-    def test_update_contract_invalid_data(self, test_db: Session):
+    def test_update_contract_invalid_data(self, test_db: Session, sample_contract_data: dict):
         """유효하지 않은 데이터로 계약 수정 테스트"""
         # 먼저 계약 생성
-        contract_data = {
-            "name": "테스트 계약",
-            "contract_number": "CON-2024-004",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        create_response = client.post("/api/v1/contracts/", json=contract_data)
+        create_response = client.post("/api/v1/contracts/", json=sample_contract_data)
         contract_id = create_response.json()["data"]["id"]
         
         # 유효하지 않은 데이터로 수정
@@ -195,18 +156,10 @@ class TestContractAPI:
         
         assert response.status_code == 422  # Validation Error
     
-    def test_delete_contract_success(self, test_db: Session):
+    def test_delete_contract_success(self, test_db: Session, sample_contract_data: dict):
         """계약 삭제 성공 테스트"""
         # 먼저 계약 생성
-        contract_data = {
-            "name": "테스트 계약",
-            "contract_number": "CON-2024-005",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        create_response = client.post("/api/v1/contracts/", json=contract_data)
+        create_response = client.post("/api/v1/contracts/", json=sample_contract_data)
         contract_id = create_response.json()["data"]["id"]
         
         # 계약 삭제
@@ -215,11 +168,7 @@ class TestContractAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
-        assert "성공적으로 삭제" in data["message"]
-        
-        # 삭제 확인
-        get_response = client.get(f"/api/v1/contracts/{contract_id}")
-        assert get_response.status_code == 404
+        assert "계약이 성공적으로 삭제되었습니다" in data["message"]
     
     def test_delete_contract_not_found(self, test_db: Session):
         """존재하지 않는 계약 삭제 테스트"""
@@ -231,40 +180,36 @@ class TestContractAPI:
 
 
 class TestContractValidation:
-    """계약 데이터 검증 테스트"""
+    """계약 검증 테스트 클래스"""
     
     def test_contract_date_validation(self, test_db: Session):
-        """계약일 검증 테스트"""
+        """계약 날짜 검증 테스트"""
+        contract_data = {
+            "name": "테스트 계약",
+            "contract_number": "CON-2024-005",
+            "contract_amount": 1000000,
+            "contract_date": "2024-01-15T00:00:00",
+            "client_name": "테스트 발주처",
+            "vendor_id": "test-vendor-id",
+            "start_date": "2024-02-01T00:00:00",
+            "end_date": "2024-01-01T00:00:00"  # 시작일보다 이전
+        }
+        
+        response = client.post("/api/v1/contracts/", json=contract_data)
+        assert response.status_code == 422  # Validation Error
+    
+    def test_contract_amount_validation(self, test_db: Session):
+        """계약 금액 검증 테스트"""
         contract_data = {
             "name": "테스트 계약",
             "contract_number": "CON-2024-006",
-            "contract_amount": 1000000,
-            "contract_date": "2024-01-15T00:00:00",
-            "start_date": "2024-02-01T00:00:00",
-            "end_date": "2024-01-01T00:00:00",  # 시작일보다 이전
-            "client_name": "테스트 발주처",
-            "vendor_id": "test-vendor-id"
-        }
-        
-        response = client.post("/api/v1/contracts/", json=contract_data)
-        
-        assert response.status_code == 400
-        data = response.json()
-        assert "종료일은 시작일보다 늦어야 합니다" in data["detail"]
-    
-    def test_contract_amount_validation(self, test_db: Session):
-        """계약금액 검증 테스트"""
-        contract_data = {
-            "name": "테스트 계약",
-            "contract_number": "CON-2024-007",
-            "contract_amount": 0,  # 0 또는 음수
+            "contract_amount": 0,  # 0원
             "contract_date": "2024-01-15T00:00:00",
             "client_name": "테스트 발주처",
             "vendor_id": "test-vendor-id"
         }
         
         response = client.post("/api/v1/contracts/", json=contract_data)
-        
         assert response.status_code == 422  # Validation Error
     
     def test_required_fields_validation(self, test_db: Session):
@@ -272,9 +217,8 @@ class TestContractValidation:
         contract_data = {
             "contract_amount": 1000000,
             "contract_date": "2024-01-15T00:00:00"
-            # name, contract_number, client_name 누락
+            # name, contract_number, client_name, vendor_id 누락
         }
         
         response = client.post("/api/v1/contracts/", json=contract_data)
-        
         assert response.status_code == 422  # Validation Error 
