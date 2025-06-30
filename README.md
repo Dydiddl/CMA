@@ -1,97 +1,187 @@
-# 건설 관리 시스템 (Construction Management System)
+# 🏗️ CMA (Construction Management System)
 
-## 프로젝트 개요
-건설 프로젝트의 효율적인 관리를 위한 종합적인 관리 시스템입니다. 계약 관리, 진행 상황 추적, 재무 기록, 문서 관리 등 건설 프로젝트의 전반적인 업무를 디지털화하여 관리할 수 있습니다.
+**건설 공사 내역서 자동화 시스템** - 계약 관리, 재무 관리, 노무 관리, 문서 처리를 통합적으로 제공하는 **하이브리드 아키텍처** 기반의 데스크톱 애플리케이션입니다.
 
-## 🧩 주요 특징
-- 설치형 실행 파일로 배포 (.exe) - Tauri 2.x 기반
-- UI는 React + TypeScript + Vite + Mantine/MUI
-- 백엔드는 Python + FastAPI + SQLAlchemy
-- 데이터베이스는 PostgreSQL (로컬) + Supabase (클라우드 연동)
-- 문서 작업(Excel 등)은 백엔드에서 Python으로 처리
-- 샤딩 기능으로 대용량 데이터 처리 지원
-- ASCR 모듈 통합으로 PDF 처리 및 검증 기능 제공
+## 🎯 프로젝트 개요
 
-## 🎯 주요 기능
-1. **계약 관리**  
-   - 공사명, 계약금액, 계약일, 발주처, 상태관리  
-   - 계약서 및 첨부 문서 업로드
-   - 계약 추정서 생성 및 관리
+CMA는 건설업계의 복잡한 공사 내역서 작성과 관리를 자동화하여 업무 효율성을 극대화하는 시스템입니다. **Python 기반의 빠른 개발**과 **선택적 네이티브 최적화**를 통해 최고의 성능과 개발 생산성을 동시에 달성합니다.
 
-2. **계약 업무 처리**
-   - 내부 양식으로 Excel 문서작성
-   - 단계별 계약 절차 체크리스트 관리
-   - PDF to Word 변환 기능
+### 🆕 주요 특징 (2025년 1월 기준)
 
-3. **노무비 관리**
-   - 일용직 명부 관리, 작업일지 업로드
-   - 주간/월간 집계 기능
-   - 노동자별 비용 추적
+- **🚀 하이브리드 아키텍처**: Python 기반 + 선택적 네이티브 최적화
+- **📦 설치형 실행 파일**: Tauri 2.x 기반 (.exe, .app, .AppImage)
+- **⚡ 성능 최적화**: 비동기 처리, 멀티프로세싱, 캐싱 전략
+- **📊 샤딩 기능**: 대용량 데이터 처리 지원
+- **🔍 ASCR 모듈**: PDF 처리 및 검증 기능 통합
+- **🌐 크로스 플랫폼**: Windows, macOS, Linux 지원
+- **🔄 실시간 동기화**: 로컬 + 클라우드 데이터 연동
 
-4. **매출 관리**
-   - 공사별 수입·지출 내역 등록
-   - 월별/분기별 통계 및 시각화
-   - 거래 내역 관리
+### 📈 프로젝트 진행률 (2025년 1월 기준)
 
-5. **거래처 관리**
-   - 기본정보, 담당자, 사업자등록증 및 통장사본 업로드
-   - 계약 및 공사와 연동
-   - 벤더 정보 관리
-
-6. **Excel 처리**
-   - Excel 파일 업로드 및 검증
-   - 데이터 처리 및 변환
-   - 템플릿 기반 문서 생성
-
-7. **ASCR (PDF 처리 및 검증)**
-   - PDF 문서 구조 분석 및 검증
-   - 표준 가격 목록 자동 다운로드
-   - 계층 구조 수정 및 최적화
-   - 지반 진실 데이터 분석
-   - PDF to 텍스트 변환 및 처리
+| 영역 | 진행률 | 상태 |
+|------|--------|------|
+| **백엔드 API** | 80% | 🟢 거의 완료 |
+| **프론트엔드** | 60% | 🟡 진행 중 |
+| **데이터베이스** | 90% | 🟢 거의 완료 |
+| **테스트** | 50% | 🟡 진행 중 |
+| **성능 최적화** | 40% | 🟡 진행 중 |
+| **전체** | 65-70% | 🟡 안정적 개발 |
 
 ## 🛠 기술 스택
-- **Frontend**: 
-  - React 18.2.0 + TypeScript 5.8.3
-  - Vite 4.5.14 (빌드 도구)
-  - Mantine 8.1.0 + Material-UI 5.17.1 (UI 라이브러리)
-  - Tauri 2.5.0 (데스크톱 앱 프레임워크)
-  - Zustand 4.5.7 (상태 관리)
-  - React Router DOM 6.30.1 (라우팅)
 
-- **Backend**: 
-  - Python 3.12+ + FastAPI 0.115.12
-  - SQLAlchemy 2.0.41 (ORM)
-  - Alembic 1.16.1 (데이터베이스 마이그레이션)
-  - Pydantic 2.11.7 (데이터 검증)
-  - Uvicorn 0.34.3 (ASGI 서버)
+### Frontend
+- **React 18.2.0** + **TypeScript 5.8.3**
+- **Vite 4.5.14** (빌드 도구)
+- **Mantine 8.1.0** + **Material-UI 5.17.1** (UI 라이브러리)
+- **Tauri 2.5.0** (데스크톱 앱 프레임워크)
+- **Zustand 4.5.7** (상태 관리)
+- **React Router DOM 6.30.1** (라우팅)
 
-- **Database**: 
-  - PostgreSQL 14+ (로컬 개발)
-  - Supabase (클라우드 프로덕션)
+### Backend
+- **Python 3.12+** (메인 개발 언어)
+- **FastAPI 0.115.12** (비동기 웹 프레임워크)
+- **SQLAlchemy 2.0.41** (ORM)
+- **Alembic 1.16.1** (데이터베이스 마이그레이션)
+- **Pydantic 2.11.7** (데이터 검증)
+- **Uvicorn 0.34.3** (ASGI 서버)
 
-- **추가 도구**:
-  - Pandas 2.3.0 (데이터 처리)
-  - OpenPyXL 3.1.5 (Excel 처리)
-  - XlsxWriter 3.2.3 (Excel 생성)
-  - PyPDF2/PyMuPDF (PDF 처리 - ASCR 모듈)
+### 데이터 처리
+- **Pandas 2.3.0** (데이터 처리)
+- **OpenPyXL 3.1.5** (Excel 처리)
+- **XlsxWriter 3.2.3** (Excel 생성)
+- **PyPDF2/PyMuPDF** (PDF 처리 - ASCR 모듈)
+
+### 성능 최적화
+- **Redis** (캐싱 및 세션 관리)
+- **Celery** (비동기 작업 처리)
+- **asyncio** (비동기 처리)
+- **multiprocessing** (CPU 집약적 작업)
+- **threading** (I/O 집약적 작업)
+- **Connection Pooling** (데이터베이스 연결 최적화)
+
+### Database
+- **PostgreSQL 14+** (로컬 개발)
+- **Supabase** (클라우드 프로덕션)
+- **Redis** (캐싱 및 세션 저장소)
+
+## 🏗️ 아키텍처 전략
+
+### 하이브리드 아키텍처 접근법
+
+CMA는 **하이브리드 아키텍처**를 채택하여 개발 속도와 성능을 모두 최적화합니다:
+
+#### 1단계: Python 기반 개발 (현재)
+```python
+# 빠른 개발과 풍부한 생태계 활용
+class ContractService:
+    async def create_contract(self, contract_data: ContractCreate) -> Contract:
+        # 비동기 처리로 성능 최적화
+        contract = Contract(**contract_data.dict())
+        self.db.add(contract)
+        await self.db.commit()
+        return contract
+```
+
+#### 2단계: 성능 최적화 (진행 중)
+```python
+# 멀티프로세싱과 캐싱으로 성능 향상
+class PerformanceOptimizedService:
+    def __init__(self):
+        self.thread_pool = ThreadPoolExecutor(max_workers=4)
+        self.cache = Redis()
+    
+    async def process_large_data(self, data_chunks: List[str]) -> List[float]:
+        # CPU 집약적 작업을 스레드 풀에서 실행
+        tasks = [
+            loop.run_in_executor(self.thread_pool, self.expensive_calculation, chunk)
+            for chunk in data_chunks
+        ]
+        return await asyncio.gather(*tasks)
+```
+
+#### 3단계: 선택적 네이티브 전환 (계획)
+```python
+# 핵심 성능 모듈만 네이티브로 전환
+class NativeOptimizedProcessor:
+    def __init__(self):
+        self.native_lib = ctypes.CDLL("./native_optimizations.dll")
+    
+    def process_pdf_native(self, pdf_path: str) -> Dict[str, Any]:
+        # 네이티브 라이브러리로 PDF 처리 최적화
+        result = self.native_lib.process_pdf(pdf_path.encode())
+        return self._parse_native_result(result)
+```
+
+### 성능 최적화 전략
+
+#### 성능 지표 (KPI)
+- **API 응답 시간**: 500ms 이내
+- **데이터베이스 쿼리**: 100ms 이내
+- **파일 처리**: 2초 이내 (1MB 기준)
+- **동시 사용자**: 100명 이상
+- **시스템 가용성**: 99.9%
+
+#### 최적화 우선순위
+1. **HIGH**: PDF 처리, 대용량 Excel 처리, 복잡한 수식 계산
+2. **MEDIUM**: API 응답 시간, 파일 업로드/다운로드, 캐싱
+3. **LOW**: UI 렌더링, 로그 처리, 설정 관리
+
+## 📁 프로젝트 구조
+
+```
+CMA/
+├── backend/                 # Python FastAPI 백엔드
+│   ├── app/
+│   │   ├── api/            # API 엔드포인트
+│   │   ├── models/         # 데이터베이스 모델
+│   │   ├── schemas/        # Pydantic 스키마
+│   │   ├── services/       # 비즈니스 로직
+│   │   │   ├── ascr/       # ASCR 모듈 (PDF 처리)
+│   │   │   ├── excel/      # Excel 처리
+│   │   │   └── estimator/  # 추정서 생성
+│   │   └── core/           # 설정 및 보안
+├── frontend/               # React + TypeScript 프론트엔드
+│   ├── src/
+│   │   ├── components/     # React 컴포넌트
+│   │   ├── pages/          # 페이지 컴포넌트
+│   │   └── services/       # API 서비스
+└── src-tauri/             # Tauri 데스크톱 앱 설정
+```
+
+### ASCR 모듈 구조
+```
+backend/app/services/ascr/
+├── src/                    # 핵심 소스 코드
+│   ├── common/            # 공통 모듈
+│   ├── utils/             # 유틸리티 모듈
+│   ├── classifier/        # 분류기
+│   ├── converter/         # 변환기
+│   └── validate/          # 검증
+├── scripts/               # 실행 스크립트
+├── input/                 # 입력 파일
+├── output/                # 출력 파일
+└── logs/                  # 로그 파일
+```
 
 ## 🚀 시작하기
 
 ### 필수 요구사항
-- Node.js 18+
-- Python 3.12+
-- PostgreSQL 14+
-- Rust 1.77.2+ (Tauri 빌드용)
 
-### 설치 방법
-1. 저장소 클론
+- **Python**: 3.12+
+- **Node.js**: 18+
+- **PostgreSQL**: 14+
+- **Redis**: 6+
+- **Rust**: 1.77+ (Tauri 빌드용)
+
+### 설치 및 실행
+
+1. **저장소 클론**
 ```bash
-git clone https://github.com/Dydiddl/CMA.git
-cd CMA
+git clone https://github.com/your-username/cma.git
+cd cma
 ```
 
-2. 백엔드 설정
+2. **백엔드 설정**
 ```bash
 cd backend
 python -m venv venv
@@ -99,160 +189,295 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. 데이터베이스 설정
-```bash
-alembic upgrade head
-```
-
-4. 프론트엔드 설정
+3. **프론트엔드 설정**
 ```bash
 cd frontend
 npm install
 ```
 
-5. 개발 서버 실행
+4. **데이터베이스 설정**
 ```bash
-# 백엔드 서버
-cd backend
-source venv/bin/activate
-uvicorn app.main:app --reload --port 8000
+# PostgreSQL 데이터베이스 생성
+createdb cma_db
 
-# 프론트엔드 개발 서버 (새 터미널에서)
+# 마이그레이션 실행
+cd backend
+alembic upgrade head
+```
+
+5. **개발 서버 실행**
+```bash
+# 백엔드 (터미널 1)
+cd backend
+uvicorn app.main:app --reload
+
+# 프론트엔드 (터미널 2)
 cd frontend
-npm run tauri dev
+npm run dev
+
+# Tauri 개발 (터미널 3)
+cd src-tauri
+cargo tauri dev
 ```
 
-## 📚 문서
-- [개발 가이드](docs/development/development-guide.md)
-- [설계 문서](docs/design/design-overview.md)
-- [API 문서](docs/design/api-design.md)
-- [데이터베이스 스키마](docs/architecture/database-schema.md)
+### 환경 변수 설정
 
-## 📝 라이선스
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+`.env` 파일을 생성하고 다음 설정을 추가하세요:
 
-## 현재 진행 상황
-- [x] 프로젝트 기본 구조 설계
-- [x] 데이터베이스 스키마 설계
-- [x] API 문서화
-- [x] 기본 모델 구현
-  - [x] User (사용자)
-  - [x] Client (고객)
-  - [x] Contract (계약)
-  - [x] Document (문서)
-  - [x] Financial (재무)
-  - [x] Labor (노무)
-  - [x] Vendor (거래처)
-  - [x] Worker (노동자)
-  - [x] Transaction (거래내역)
-  - [x] Revenue (수익)
-  - [x] Expense (지출)
-  - [x] LaborCost (노무비)
-- [x] API 엔드포인트 구현
-  - [x] 계약 관리 API
-  - [x] 재무 관리 API
-  - [x] 노무 관리 API
-  - [x] Excel 처리 API
-- [x] 프론트엔드 개발
-  - [x] Tauri 데스크톱 앱 UI 구현
-  - [x] 사용자 인증 시스템
-  - [x] 프로젝트 관리 페이지
-  - [x] 작업 관리 페이지
-  - [x] Excel 업로드/처리 기능
-  - [x] 대시보드
-- [x] 사용자 인증 시스템
-- [x] 파일 업로드 시스템
-- [x] Excel 처리 시스템
-- [x] 샤딩 기능 구현
-- [x] ASCR 모듈 통합
-  - [x] PDF 처리 및 검증 시스템
-  - [x] 표준 가격 목록 다운로드
-  - [x] 계층 구조 수정 도구
-  - [x] 지반 진실 데이터 분석
-- [ ] ASCR API 엔드포인트 연동
-- [ ] 보고서 생성 시스템
-- [ ] 오프라인 지원 기능
-- [ ] 로컬 데이터 동기화
+```env
+# 데이터베이스
+DATABASE_URL=postgresql://user:password@localhost/cma_db
 
-## 프로젝트 구조
-```
-CMA/
-├── backend/
-│   ├── app/
-│   │   ├── models/          # 데이터베이스 모델
-│   │   ├── schemas/         # Pydantic 스키마
-│   │   ├── api/
-│   │   │   ├── v1/         # API v1 엔드포인트
-│   │   │   └── endpoints/  # 기타 엔드포인트
-│   │   ├── services/       # 비즈니스 로직
-│   │   │   ├── ascr/       # ASCR 모듈 (PDF 처리)
-│   │   │   ├── excel/      # Excel 처리
-│   │   │   └── estimator/  # 추정서 생성
-│   │   ├── core/           # 설정 및 보안
-│   │   └── middleware/     # 미들웨어
-│   ├── tests/              # 테스트 코드
-│   └── migrations/         # 데이터베이스 마이그레이션
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React 컴포넌트
-│   │   ├── pages/          # 페이지 컴포넌트
-│   │   ├── services/       # API 서비스
-│   │   ├── hooks/          # 커스텀 훅
-│   │   ├── contexts/       # React Context
-│   │   ├── stores/         # 상태 관리
-│   │   └── types/          # TypeScript 타입 정의
-│   └── public/             # 정적 파일
-├── src-tauri/              # Tauri 설정 및 Rust 코드
-├── docs/                   # 프로젝트 문서
-└── venv/                   # Python 가상환경
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# 보안
+SECRET_KEY=your-secret-key
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# 성능 설정
+MAX_WORKERS=4
+CACHE_TTL=3600
+API_TIMEOUT=30
 ```
 
-## 기여 방법
-1. 이슈 생성
-2. 브랜치 생성 (`git checkout -b feature/새기능`)
-3. 변경사항 커밋
-4. Pull Request 생성
+## 📊 주요 기능
 
-## 설치 방법
+### 1. 계약 관리
+- 계약 생성, 수정, 삭제
+- 계약 상태 추적
+- 계약서 자동 생성
+- 계약 이력 관리
 
-### Unix/Linux/macOS 환경
+### 2. 재무 관리
+- 예산 계획 및 추적
+- 비용 분석 및 보고
+- 수익성 분석
+- 재무 보고서 자동 생성
+
+### 3. 노무 관리
+- 인력 배치 및 관리
+- 작업 시간 추적
+- 임금 계산
+- 노무비 분석
+
+### 4. 문서 처리 (ASCR 모듈)
+- PDF 텍스트 추출
+- 목차 자동 생성
+- 문서 분할 및 병합
+- 표준품셈 자동 적용
+
+### 5. Excel 처리
+- 대용량 Excel 파일 처리
+- 데이터 자동 변환
+- 보고서 자동 생성
+- 데이터 검증 및 정리
+
+## 🔧 개발 가이드
+
+### 코드 스타일
+
+#### Python (PEP8 준수)
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+모듈 설명
+"""
+
+from typing import List, Dict, Optional
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+class ExampleService:
+    """서비스 클래스 설명"""
+    
+    def __init__(self):
+        self.thread_pool = ThreadPoolExecutor(max_workers=4)
+    
+    async def process_data(self, data: List[str]) -> List[Dict]:
+        """데이터 처리 - 비동기"""
+        # 비동기 처리 로직
+        return []
+```
+
+#### TypeScript (ESLint 준수)
+```typescript
+// 파일명: example-service.ts
+// 컴포넌트명: ExampleService
+// 변수명: camelCase
+
+interface ExampleData {
+  id: string;
+  name: string;
+  status: string;
+}
+
+export const ExampleService: React.FC<{
+  data: ExampleData[];
+  onUpdate: (data: ExampleData) => void;
+}> = ({ data, onUpdate }) => {
+  const handleUpdate = async (item: ExampleData) => {
+    try {
+      await onUpdate(item);
+    } catch (error) {
+      console.error('업데이트 실패:', error);
+    }
+  };
+
+  return (
+    <div className="example-service">
+      {/* 컴포넌트 내용 */}
+    </div>
+  );
+};
+```
+
+### 성능 최적화 패턴
+
+#### 비동기 처리
+```python
+# 비동기 API 엔드포인트
+@app.post("/contracts")
+async def create_contract(contract_data: ContractCreate):
+    # 비동기 서비스 호출
+    contract = await contract_service.create_contract(contract_data)
+    return contract
+```
+
+#### 멀티프로세싱
+```python
+# CPU 집약적 작업
+from multiprocessing import Pool
+
+def process_large_data(data_chunks):
+    with Pool() as pool:
+        results = pool.map(process_chunk, data_chunks)
+    return results
+```
+
+#### 캐싱 전략
+```python
+# Redis 캐싱
+@cache_manager.get_or_set("contracts:list", ttl=3600)
+async def get_contracts_list():
+    return await contract_service.get_all_contracts()
+```
+
+## 🧪 테스트
+
+### 테스트 실행
+
 ```bash
+# 백엔드 테스트
 cd backend
-chmod +x setup.sh  # 실행 권한 부여
-./setup.sh
-```
+pytest
 
-### Windows 환경
-```powershell
-cd backend
-# PowerShell 실행 정책 변경 (관리자 권한 필요)
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-.\setup.ps1
-```
-
-## 서버 실행
-### Unix/Linux/macOS 환경
-```bash
-source venv/bin/activate
-uvicorn app.main:app --reload --port 8000
-```
-
-### Windows 환경
-```powershell
-.\venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload --port 8000
-```
-
-## 빌드 및 배포
-### 데스크톱 앱 빌드
-```bash
+# 프론트엔드 테스트
 cd frontend
-npm run tauri build
+npm test
+
+# 전체 테스트 커버리지
+pytest --cov=app --cov-report=html
 ```
 
-### 백엔드 배포
+### 테스트 커버리지 목표
+
+- **전체 커버리지**: 80%
+- **단위 테스트**: 85%
+- **통합 테스트**: 75%
+- **E2E 테스트**: 60%
+
+## 📦 배포
+
+### 개발 빌드
+
 ```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Tauri 개발 빌드
+cd src-tauri
+cargo tauri build
+
+# 생성된 파일
+# Windows: target/release/bundle/msi/app_0.1.0_x64_en-US.msi
+# macOS: target/release/bundle/dmg/app_0.1.0_x64.dmg
+# Linux: target/release/bundle/appimage/app_0.1.0_amd64.AppImage
 ```
+
+### 프로덕션 배포
+
+```bash
+# 백엔드 배포
+cd backend
+docker build -t cma-backend .
+docker run -p 8000:8000 cma-backend
+
+# 프론트엔드 배포
+cd frontend
+npm run build
+```
+
+## 🔄 버전 관리
+
+### Semantic Versioning
+
+- **MAJOR**: 기존 API와 호환되지 않는 변경
+- **MINOR**: 기존 API와 호환되는 새로운 기능
+- **PATCH**: 버그 수정
+
+### 브랜치 전략
+
+- **main**: 프로덕션 배포용
+- **develop**: 개발 통합용
+- **feature/**: 기능 개발
+- **hotfix/**: 긴급 버그 수정
+- **release/**: 릴리즈 준비
+
+## 🤝 기여하기
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### 커밋 메시지 규칙
+
+```
+<type>(<scope>): <description>
+
+# 타입
+feat: 새로운 기능 추가
+fix: 버그 수정
+perf: 성능 개선
+refactor: 코드 리팩토링
+test: 테스트 코드 추가/수정
+docs: 문서 수정
+style: 코드 포맷팅
+chore: 빌드 프로세스 변경
+
+# 예시
+feat(contract): 계약 생성 API 엔드포인트 추가
+perf(database): 데이터베이스 쿼리 최적화
+fix(performance): 메모리 누수 수정
+```
+
+## 📄 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+
+## 📞 연락처
+
+- **프로젝트 관리자**: [이름] - [이메일]
+- **기술 문의**: [이메일]
+- **버그 리포트**: [GitHub Issues](https://github.com/your-username/cma/issues)
+
+## 🙏 감사의 말
+
+- [FastAPI](https://fastapi.tiangolo.com/) - 현대적이고 빠른 웹 프레임워크
+- [Tauri](https://tauri.app/) - 안전하고 빠른 데스크톱 앱 프레임워크
+- [React](https://reactjs.org/) - 사용자 인터페이스 구축 라이브러리
+- [PostgreSQL](https://www.postgresql.org/) - 강력한 오픈소스 데이터베이스
+
+---
+
+**CMA** - 건설업계의 디지털 혁신을 이끄는 솔루션 🏗️

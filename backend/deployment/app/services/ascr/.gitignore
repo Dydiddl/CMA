@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+
+# Logs and Debug files
+*.log
+logs/
+log/
+output/*_debug_*.txt
+output/analysis_log_*.txt
+output/pdf_debug_*.txt
+temp_*.py
+venv_requirements_check.txt
+
+# Local configuration
+config.local.yaml
+.env.local
+
+# Word 임시 파일
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.xls
+
+# PDF 관련
+*.pdf
+extracted_chapters/
+
+# 테스트 관련
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover

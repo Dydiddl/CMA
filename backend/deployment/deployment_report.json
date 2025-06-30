@@ -1,0 +1,73 @@
+{
+  "deployment_info": {
+    "timestamp": "2025-06-30T22:16:31.384324",
+    "deployment_dir": "/home/dydid/CMA/backend/deployment",
+    "backup_dir": "/home/dydid/CMA/backend/backup"
+  },
+  "preparation_results": {
+    "structure_creation": {
+      "status": "SUCCESS",
+      "message": "배포 구조 생성 완료",
+      "deployment_dir": "/home/dydid/CMA/backend/deployment",
+      "backup_dir": "/home/dydid/CMA/backend/backup"
+    },
+    "file_copy": {
+      "status": "SUCCESS",
+      "message": "애플리케이션 파일 복사 완료",
+      "copied_files": [
+        "app -> app",
+        "scripts -> scripts",
+        "tests -> tests",
+        "requirements.txt -> requirements.txt",
+        "main.py -> main.py",
+        "alembic.ini -> alembic.ini"
+      ],
+      "skipped_files": [
+        "config"
+      ]
+    },
+    "config_creation": {
+      "status": "SUCCESS",
+      "message": "배포 설정 파일 생성 완료",
+      "created_files": [
+        ".env",
+        "deploy.sh"
+      ]
+    },
+    "backup": {
+      "status": "SUCCESS",
+      "message": "백업 생성 완료",
+      "backup_file": "cma_backup_20250630_221627.zip",
+      "backup_size": 27598036
+    },
+    "validation": {
+      "status": "SUCCESS",
+      "message": "배포 유효성 검사 완료",
+      "is_valid": true,
+      "validation_results": {
+        "required_files": [
+          "main.py",
+          "requirements.txt",
+          "app/",
+          "config/",
+          ".env",
+          "deploy.sh"
+        ],
+        "missing_files": [],
+        "file_permissions": [
+          "deploy.sh: 실행 권한 있음"
+        ],
+        "config_validation": [
+          ".env: 필수 설정 포함"
+        ]
+      }
+    }
+  },
+  "deployment_instructions": [
+    "1. 배포 디렉토리로 이동: cd deployment",
+    "2. 환경 설정 확인: cat .env",
+    "3. 배포 스크립트 실행: ./deploy.sh",
+    "4. 애플리케이션 접속: http://localhost:8000",
+    "5. 로그 확인: tail -f logs/app.log"
+  ]
+}
