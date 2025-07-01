@@ -9,7 +9,7 @@ import sys
 import os
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget
-from PySide6.QtCore import Qt, QThread, pyqtSignal
+from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QIcon, QFont
 
 # 프로젝트 루트 경로 추가

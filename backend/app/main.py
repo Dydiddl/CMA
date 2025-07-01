@@ -78,6 +78,69 @@ async def get_cache_status():
         "memory_cache_size": len(cache.memory_cache.cache)
     }
 
+# 테스트용 엔드포인트 (인증 없이)
+@app.get("/test/contracts")
+async def test_get_contracts():
+    """테스트용 계약 목록 조회"""
+    return {
+        "status": "success",
+        "data": [
+            {
+                "id": "1",
+                "name": "테스트 계약 1",
+                "contract_number": "CON-2024-001",
+                "contract_amount": 1000000,
+                "client_name": "테스트 발주처",
+                "status": "진행중"
+            },
+            {
+                "id": "2",
+                "name": "테스트 계약 2",
+                "contract_number": "CON-2024-002",
+                "contract_amount": 2000000,
+                "client_name": "테스트 발주처 2",
+                "status": "완료"
+            }
+        ],
+        "total": 2
+    }
+
+@app.get("/test/financial")
+async def test_get_financial():
+    """테스트용 재무 정보 조회"""
+    return {
+        "status": "success",
+        "data": {
+            "total_revenue": 5000000,
+            "total_expenses": 3000000,
+            "profit": 2000000
+        }
+    }
+
+@app.get("/test/labor")
+async def test_get_labor():
+    """테스트용 노무 정보 조회"""
+    return {
+        "status": "success",
+        "data": [
+            {
+                "id": "1",
+                "worker_name": "홍길동",
+                "position": "현장소장",
+                "salary": 5000000,
+                "work_hours": 160
+            },
+            {
+                "id": "2",
+                "worker_name": "김철수",
+                "position": "기술자",
+                "salary": 3500000,
+                "work_hours": 160
+            }
+        ],
+        "total": 2
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

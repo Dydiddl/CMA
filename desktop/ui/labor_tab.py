@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QDateEdit, QSpinBox, QDoubleSpinBox, QTextEdit, QFormLayout,
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout
 )
-from PySide6.QtCore import Qt, QDate, QThread, pyqtSignal
+from PySide6.QtCore import Qt, QDate, QThread, Signal
 from PySide6.QtGui import QFont, QColor
 import logging
 from typing import Dict, Any, List, Optional
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 class LaborDataWorker(QThread):
     """노무 데이터를 백그라운드에서 로드하는 워커 스레드"""
     
-    data_loaded = pyqtSignal(dict)
-    data_failed = pyqtSignal(str)
+    data_loaded = Signal(dict)
+    data_failed = Signal(str)
     
     def __init__(self, search: str = None, worker_id: str = None, skip: int = 0, limit: int = 50):
         super().__init__()
@@ -64,8 +64,8 @@ class LaborDataWorker(QThread):
 class LaborSummaryWorker(QThread):
     """노무 요약 데이터를 백그라운드에서 로드하는 워커 스레드"""
     
-    summary_loaded = pyqtSignal(dict)
-    summary_failed = pyqtSignal(str)
+    summary_loaded = Signal(dict)
+    summary_failed = Signal(str)
     
     def run(self):
         """요약 데이터 로드 실행"""
@@ -88,8 +88,8 @@ class LaborSummaryWorker(QThread):
 class LaborSaveWorker(QThread):
     """노무 기록 저장을 백그라운드에서 처리하는 워커 스레드"""
     
-    save_success = pyqtSignal(dict)
-    save_failed = pyqtSignal(str)
+    save_success = Signal(dict)
+    save_failed = Signal(str)
     
     def __init__(self, labor_data: Dict[str, Any], is_update: bool = False, record_id: str = None):
         super().__init__()
@@ -122,8 +122,8 @@ class LaborSaveWorker(QThread):
 class LaborDeleteWorker(QThread):
     """노무 기록 삭제를 백그라운드에서 처리하는 워커 스레드"""
     
-    delete_success = pyqtSignal()
-    delete_failed = pyqtSignal(str)
+    delete_success = Signal()
+    delete_failed = Signal(str)
     
     def __init__(self, record_id: str):
         super().__init__()
@@ -150,8 +150,8 @@ class LaborDeleteWorker(QThread):
 class WorkersDataWorker(QThread):
     """근로자 목록을 백그라운드에서 로드하는 워커 스레드"""
     
-    workers_loaded = pyqtSignal(dict)
-    workers_failed = pyqtSignal(str)
+    workers_loaded = Signal(dict)
+    workers_failed = Signal(str)
     
     def __init__(self, search: str = None, skip: int = 0, limit: int = 100):
         super().__init__()

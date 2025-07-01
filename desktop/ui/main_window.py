@@ -19,8 +19,12 @@ from .contract_tab import ContractTab
 from .financial_tab import FinancialTab
 from .labor_tab import LaborTab
 from .dashboard_tab import DashboardTab
+from .project_tab import ProjectTab
+from .settings_tab import SettingsTab
+from .help_tab import HelpTab
 from .login_dialog import LoginDialog
 from api.client import get_api_client, APIError
+from widgets.api_test_widget import APITestWidget
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +222,22 @@ class MainWindow(QMainWindow):
         # 노무 관리 탭
         self.labor_tab = LaborTab()
         self.tab_widget.addTab(self.labor_tab, "노무 관리")
+        
+        # 프로젝트 관리 탭
+        self.project_tab = ProjectTab()
+        self.tab_widget.addTab(self.project_tab, "프로젝트 관리")
+        
+        # 설정 탭
+        self.settings_tab = SettingsTab()
+        self.tab_widget.addTab(self.settings_tab, "설정")
+        
+        # 도움말 탭
+        self.help_tab = HelpTab()
+        self.tab_widget.addTab(self.help_tab, "도움말")
+        
+        # API 테스트 탭
+        self.api_test_tab = APITestWidget()
+        self.tab_widget.addTab(self.api_test_tab, "API 테스트")
         
         layout.addWidget(self.tab_widget)
     

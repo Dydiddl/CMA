@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox, QCheckBox, QFrame, QGridLayout
 )
-from PySide6.QtCore import Qt, Signal, QThread, pyqtSignal
+from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont, QIcon, QPixmap
 import logging
 from typing import Optional, Dict, Any
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 class LoginWorker(QThread):
     """로그인 작업을 백그라운드에서 처리하는 워커 스레드"""
     
-    login_success = pyqtSignal(dict)
-    login_failed = pyqtSignal(str)
+    login_success = Signal(dict)
+    login_failed = Signal(str)
     
     def __init__(self, email: str, password: str):
         super().__init__()
@@ -54,8 +54,8 @@ class LoginWorker(QThread):
 class RegisterWorker(QThread):
     """회원가입 작업을 백그라운드에서 처리하는 워커 스레드"""
     
-    register_success = pyqtSignal(dict)
-    register_failed = pyqtSignal(str)
+    register_success = Signal(dict)
+    register_failed = Signal(str)
     
     def __init__(self, email: str, password: str, name: str):
         super().__init__()

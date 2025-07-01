@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QLabel, QLineEdit, QComboBox, QDateEdit, QSpinBox, QDoubleSpinBox,
     QTextEdit, QPushButton, QMessageBox, QFrame, QGroupBox
 )
-from PySide6.QtCore import Qt, QDate, QThread, pyqtSignal
+from PySide6.QtCore import Qt, QDate, QThread, Signal
 from PySide6.QtGui import QFont
 import logging
 from typing import Dict, Any, Optional
@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 class LaborSaveWorker(QThread):
     """노무자 저장을 백그라운드에서 처리하는 워커 스레드"""
     
-    save_success = pyqtSignal(dict)
-    save_failed = pyqtSignal(str)
+    save_success = Signal(dict)
+    save_failed = Signal(str)
     
     def __init__(self, labor_data: Dict[str, Any], is_update: bool = False, record_id: str = None):
         super().__init__()

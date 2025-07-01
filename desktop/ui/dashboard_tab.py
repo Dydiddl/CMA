@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QLabel, QFrame, QPushButton, QProgressBar,
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox
 )
-from PySide6.QtCore import Qt, QTimer, QThread, pyqtSignal
+from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QFont, QColor
 import logging
 from typing import Dict, Any, List
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 class DashboardDataWorker(QThread):
     """대시보드 데이터를 백그라운드에서 로드하는 워커 스레드"""
     
-    data_loaded = pyqtSignal(dict)
-    data_failed = pyqtSignal(str)
+    data_loaded = Signal(dict)
+    data_failed = Signal(str)
     
     def run(self):
         """데이터 로드 실행"""

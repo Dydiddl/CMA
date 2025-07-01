@@ -11,10 +11,11 @@ from PySide6.QtWidgets import (
     QDateEdit, QSpinBox, QDoubleSpinBox, QTextEdit, QFormLayout,
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout
 )
-from PySide6.QtCore import Qt, QDate, QThread, pyqtSignal
+from PySide6.QtCore import Qt, QDate, QThread, Signal
 from PySide6.QtGui import QFont, QColor
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import logging
 from api.client import get_api_client, APIError
 
 logger = logging.getLogger(__name__)
@@ -23,8 +24,8 @@ logger = logging.getLogger(__name__)
 class ContractDataWorker(QThread):
     """계약 데이터를 백그라운드에서 로드하는 워커 스레드"""
     
-    data_loaded = pyqtSignal(dict)
-    data_failed = pyqtSignal(str)
+    data_loaded = Signal(dict)
+    data_failed = Signal(str)
     
     def __init__(self, search: str = None, status: str = None, skip: int = 0, limit: int = 50):
         super().__init__()
@@ -63,8 +64,8 @@ class ContractDataWorker(QThread):
 class ContractSaveWorker(QThread):
     """계약 저장을 백그라운드에서 처리하는 워커 스레드"""
     
-    save_success = pyqtSignal(dict)
-    save_failed = pyqtSignal(str)
+    save_success = Signal(dict)
+    save_failed = Signal(str)
     
     def __init__(self, contract_data: Dict[str, Any], is_update: bool = False, contract_id: str = None):
         super().__init__()
@@ -97,8 +98,8 @@ class ContractSaveWorker(QThread):
 class ContractDeleteWorker(QThread):
     """계약 삭제를 백그라운드에서 처리하는 워커 스레드"""
     
-    delete_success = pyqtSignal()
-    delete_failed = pyqtSignal(str)
+    delete_success = Signal()
+    delete_failed = Signal(str)
     
     def __init__(self, contract_id: str):
         super().__init__()
