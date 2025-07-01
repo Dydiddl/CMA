@@ -13,8 +13,14 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QIcon, QFont, QFontDatabase
 import platform
 
-# WSL2 환경에서 GUI 실행을 위한 환경 변수 설정
-if platform.system() == "Linux":
+# 플랫폼별 GUI 실행 환경 설정
+if platform.system() == "Darwin":  # macOS
+    # Mac 특화 설정
+    os.environ['QT_QPA_PLATFORM'] = 'cocoa'  # Cocoa 플랫폼 사용
+    os.environ['QT_MAC_WANTS_LAYER'] = '1'   # Metal 렌더링 사용
+    print("[INFO] macOS 환경에서 Cocoa 플랫폼으로 실행합니다.")
+    
+elif platform.system() == "Linux":
     # WSL2 환경 감지
     is_wsl = os.path.exists('/proc/version') and 'microsoft' in open('/proc/version').read().lower()
     
@@ -30,9 +36,17 @@ if platform.system() == "Linux":
     else:
         # 일반 Linux
         os.environ['QT_QPA_PLATFORM'] = 'xcb'
+        print("[INFO] Linux 환경에서 XCB 플랫폼으로 실행합니다.")
+        
+elif platform.system() == "Windows":
+    # Windows 환경
+    os.environ['QT_QPA_PLATFORM'] = 'windows'
+    print("[INFO] Windows 환경에서 Windows 플랫폼으로 실행합니다.")
+    
 else:
-    # Windows/Mac
-    os.environ['QT_QPA_PLATFORM'] = 'xcb'  # 일반 Linux에서 한글 지원
+    # 기타 환경
+    os.environ['QT_QPA_PLATFORM'] = 'xcb'
+    print(f"[INFO] {platform.system()} 환경에서 XCB 플랫폼으로 실행합니다.")
 
 os.environ['LANG'] = 'ko_KR.UTF-8'     # 한글 로케일 설정
 
