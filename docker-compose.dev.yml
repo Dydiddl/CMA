@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Development)
+  postgres_dev:
+    image: postgres:15-alpine
+    container_name: cma_postgres_dev
+    environment:
+      POSTGRES_DB: construction_management_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # 다른 포트 사용
+    networks:
+      - cma_dev_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache (Development)
+  redis_dev:
+    image: redis:7-alpine
+    container_name: cma_redis_dev
+    ports:
+      - "6380:6379"  # 다른 포트 사용
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - cma_dev_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API (Development)
+  backend_dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: cma_backend_dev
+    environment:
+      - POSTGRES_SERVER=postgres_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=construction_management_dev
+      - REDIS_URL=redis://redis_dev:6379
+      - SECRET_KEY=dev-secret-key
+      - USE_LOCAL_DB=false
+      - ENABLE_SHARDING=false
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend:/app
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - ./backend/temp:/app/temp
+    ports:
+      - "8001:8000"  # 다른 포트 사용
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+      redis_dev:
+        condition: service_healthy
+    networks:
+      - cma_dev_network
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Frontend (Development)
+  frontend_dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: cma_frontend_dev
+    environment:
+      - VITE_API_URL=http://localhost:8001
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"  # 다른 포트 사용
+    depends_on:
+      - backend_dev
+    networks:
+      - cma_dev_network
+    command: ["npm", "run", "dev"]
+
+  # Database Admin (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cma_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@cma.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres_dev
+    networks:
+      - cma_dev_network
+
+  # Redis Admin (Optional)
+  redis_commander:
+    image: rediscommander/redis-commander:latest
+    container_name: cma_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis_dev:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis_dev
+    networks:
+      - cma_dev_network
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  cma_dev_network:
+    driver: bridge 

@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import psutil
 import logging
 from app.models.contract import Contract
-from app.models.financial import Financial
+from app.models.financial import FinancialRecord
 from app.models.labor import Labor
 from app.models.worker import Worker
 from app.models.user import User
@@ -115,22 +115,22 @@ class DashboardService:
         try:
             # 총 수익
             total_revenue_result = self.db.query(
-                func.sum(Financial.amount)
+                func.sum(FinancialRecord.amount)
             ).filter(
                 and_(
-                    Financial.user_id == user_id,
-                    Financial.type == "revenue"
+                    FinancialRecord.user_id == user_id,
+                    FinancialRecord.type == "revenue"
                 )
             ).scalar()
             total_revenue = float(total_revenue_result or 0)
             
             # 총 지출
             total_expenses_result = self.db.query(
-                func.sum(Financial.amount)
+                func.sum(FinancialRecord.amount)
             ).filter(
                 and_(
-                    Financial.user_id == user_id,
-                    Financial.type == "expense"
+                    FinancialRecord.user_id == user_id,
+                    FinancialRecord.type == "expense"
                 )
             ).scalar()
             total_expenses = float(total_expenses_result or 0)
@@ -285,13 +285,13 @@ class DashboardService:
                 month_end = month_end.replace(day=1) - timedelta(days=1)
                 
                 amount_result = self.db.query(
-                    func.sum(Financial.amount)
+                    func.sum(FinancialRecord.amount)
                 ).filter(
                     and_(
-                        Financial.user_id == user_id,
-                        Financial.type == type_,
-                        Financial.date >= month_start,
-                        Financial.date <= month_end
+                        FinancialRecord.user_id == user_id,
+                        FinancialRecord.type == type_,
+                        FinancialRecord.date >= month_start,
+                        FinancialRecord.date <= month_end
                     )
                 ).scalar()
                 
@@ -309,15 +309,15 @@ class DashboardService:
         """상위 지출 카테고리 조회"""
         try:
             categories = self.db.query(
-                Financial.category,
-                func.sum(Financial.amount)
+                FinancialRecord.category,
+                func.sum(FinancialRecord.amount)
             ).filter(
                 and_(
-                    Financial.user_id == user_id,
-                    Financial.type == "expense"
+                    FinancialRecord.user_id == user_id,
+                    FinancialRecord.type == "expense"
                 )
-            ).group_by(Financial.category).order_by(
-                func.sum(Financial.amount).desc()
+            ).group_by(FinancialRecord.category).order_by(
+                func.sum(FinancialRecord.amount).desc()
             ).limit(5).all()
             
             return [

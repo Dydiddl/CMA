@@ -27,6 +27,8 @@ pandas==2.3.0
 XlsxWriter==3.2.3
 lxml==5.4.0
 pypdf==3.17.4
+tabula-py==2.9.0
+pdf2docx==0.6.6
 
 # Performance Monitoring
 psutil==6.1.0

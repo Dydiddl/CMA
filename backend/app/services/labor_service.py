@@ -9,7 +9,7 @@ from sqlalchemy import and_, or_, func, desc, asc
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, timedelta
 import logging
-from app.models.labor import Labor, LaborRecord
+from app.models.labor import Labor, WorkLog
 from app.schemas.labor import LaborCreate, LaborUpdate, LaborResponse, LaborListResponse
 from app.core.exceptions import NotFoundException, ValidationException
 from app.core.cache import get_cache, CacheKeys
@@ -201,8 +201,8 @@ class LaborService:
                 return False
             
             # 관련 기록 확인
-            related_records = self.db.query(LaborRecord).filter(
-                LaborRecord.worker_id == labor_id
+            related_records = self.db.query(WorkLog).filter(
+                WorkLog.worker_id == labor_id
             ).count()
             
             if related_records > 0:
@@ -252,23 +252,23 @@ class LaborService:
             
             # 이번 달 근무 기록 통계
             monthly_records = self.db.query(
-                func.sum(LaborRecord.hours_worked).label('total_hours'),
-                func.sum(LaborRecord.hours_worked * Labor.hourly_wage).label('total_cost')
-            ).join(Labor, LaborRecord.worker_id == Labor.id).filter(
-                LaborRecord.work_date >= current_month_start
+                func.sum(WorkLog.hours_worked).label('total_hours'),
+                func.sum(WorkLog.hours_worked * Labor.hourly_wage).label('total_cost')
+            ).join(Labor, WorkLog.worker_id == Labor.id).filter(
+                WorkLog.work_date >= current_month_start
             ).first()
             
             monthly_hours = float(monthly_records.total_hours) if monthly_records.total_hours else 0.0
             monthly_cost = float(monthly_records.total_cost) if monthly_records.total_cost else 0.0
             
             # 이번 주 근무 시간
-            weekly_hours = self.db.query(func.sum(LaborRecord.hours_worked)).filter(
-                LaborRecord.work_date >= week_start
+            weekly_hours = self.db.query(func.sum(WorkLog.hours_worked)).filter(
+                WorkLog.work_date >= week_start
             ).scalar()
             weekly_hours = float(weekly_hours) if weekly_hours else 0.0
             
             # 총 근무 시간 (전체)
-            total_hours = self.db.query(func.sum(LaborRecord.hours_worked)).scalar()
+            total_hours = self.db.query(func.sum(WorkLog.hours_worked)).scalar()
             total_hours = float(total_hours) if total_hours else 0.0
             
             # 가동률 계산
@@ -306,13 +306,13 @@ class LaborService:
             logger.error(f"노무 요약 통계 계산 실패: {e}")
             raise
     
-    def batch_create_labor_records(self, records: List[Dict[str, Any]]) -> List[LaborRecord]:
+    def batch_create_labor_records(self, records: List[Dict[str, Any]]) -> List[WorkLog]:
         """노무 기록 배치 생성 - 성능 최적화"""
         try:
             labor_records = []
             
             for record_data in records:
-                labor_record = LaborRecord(**record_data)
+                labor_record = WorkLog(**record_data)
                 labor_records.append(labor_record)
             
             # 배치 삽입
@@ -340,27 +340,27 @@ class LaborService:
         try:
             # 기간별 근무 기록 통계
             period_stats = self.db.query(
-                func.count(LaborRecord.id).label('total_records'),
-                func.sum(LaborRecord.hours_worked).label('total_hours'),
-                func.sum(LaborRecord.hours_worked * Labor.hourly_wage).label('total_cost'),
-                func.avg(LaborRecord.hours_worked).label('avg_hours_per_day')
-            ).join(Labor, LaborRecord.worker_id == Labor.id).filter(
+                func.count(WorkLog.id).label('total_records'),
+                func.sum(WorkLog.hours_worked).label('total_hours'),
+                func.sum(WorkLog.hours_worked * Labor.hourly_wage).label('total_cost'),
+                func.avg(WorkLog.hours_worked).label('avg_hours_per_day')
+            ).join(Labor, WorkLog.worker_id == Labor.id).filter(
                 and_(
-                    LaborRecord.work_date >= start_date,
-                    LaborRecord.work_date <= end_date
+                    WorkLog.work_date >= start_date,
+                    WorkLog.work_date <= end_date
                 )
             ).first()
             
             # 직종별 통계
             job_type_stats = self.db.query(
                 Labor.job_type,
-                func.count(LaborRecord.id).label('record_count'),
-                func.sum(LaborRecord.hours_worked).label('total_hours'),
-                func.sum(LaborRecord.hours_worked * Labor.hourly_wage).label('total_cost')
-            ).join(LaborRecord, Labor.id == LaborRecord.worker_id).filter(
+                func.count(WorkLog.id).label('record_count'),
+                func.sum(WorkLog.hours_worked).label('total_hours'),
+                func.sum(WorkLog.hours_worked * Labor.hourly_wage).label('total_cost')
+            ).join(WorkLog, Labor.id == WorkLog.worker_id).filter(
                 and_(
-                    LaborRecord.work_date >= start_date,
-                    LaborRecord.work_date <= end_date
+                    WorkLog.work_date >= start_date,
+                    WorkLog.work_date <= end_date
                 )
             ).group_by(Labor.job_type).all()
             
@@ -420,7 +420,7 @@ class LaborService:
                     idx_tup_read,
                     idx_tup_fetch
                 FROM pg_stat_user_indexes
-                WHERE tablename IN ('labor', 'labor_records')
+                WHERE tablename IN ('labor', 'work_logs')
                 ORDER BY idx_scan DESC
             """).fetchall()
             

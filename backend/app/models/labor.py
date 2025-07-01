@@ -13,10 +13,12 @@ class Labor(BaseModel):
     bank_account = Column(String)
     daily_wage = Column(Float)
     status = Column(String)  # 재직중, 퇴사 등
-    contract_id = Column(Integer, ForeignKey("contracts.id"))
+    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=True)
 
     # 관계 설정
     contract = relationship("Contract", back_populates="labors")
+    project = relationship("Project", back_populates="labors")
     work_logs = relationship("WorkLog", back_populates="labor")
 
 class WorkLog(BaseModel):

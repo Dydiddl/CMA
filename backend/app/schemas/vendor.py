@@ -60,4 +60,28 @@ class Vendor(VendorBase):
     documents: List[VendorDocument] = []
 
     class Config:
+        from_attributes = True
+
+
+class VendorResponse(VendorBase):
+    """거래처 응답 스키마"""
+    id: int = Field(..., description="거래처 ID")
+    created_at: datetime = Field(..., description="생성일")
+    updated_at: datetime = Field(..., description="수정일")
+    documents: List[VendorDocument] = Field(default=[], description="문서 목록")
+    
+    class Config:
+        from_attributes = True
+
+
+class VendorListResponse(BaseModel):
+    """거래처 목록 응답 스키마"""
+    status: str = Field(default="success", description="응답 상태")
+    data: List[VendorResponse] = Field(..., description="거래처 목록")
+    total: int = Field(..., description="전체 거래처 수")
+    page: int = Field(..., description="현재 페이지")
+    size: int = Field(..., description="페이지 크기")
+    message: Optional[str] = Field(None, description="응답 메시지")
+    
+    class Config:
         from_attributes = True 

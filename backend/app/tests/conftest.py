@@ -9,7 +9,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 from app.db.base import Base
-from app.db.session import get_db
+from app.api.deps import get_db
 from app.main import app
 
 # 테스트용 데이터베이스 URL
@@ -52,4 +52,14 @@ def client(db):
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
         yield test_client
-    app.dependency_overrides.clear() 
+    app.dependency_overrides.clear()
+
+def get_test_db():
+    """
+    테스트용 DB 세션을 반환하는 함수 (테스트에서 import용)
+    """
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close() 

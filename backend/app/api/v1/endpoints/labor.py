@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
-from ....db.base import get_db
+from app.api.deps import get_db
 from ....schemas.labor import (
     Labor,
     LaborCreate,

@@ -269,8 +269,31 @@ async def cleanup_cache_periodically():
     """주기적으로 캐시 정리"""
     while True:
         try:
-            cache_manager.cleanup()
-            await asyncio.sleep(300)  # 5분마다
+            # 메모리 캐시 정리
+            memory_cache.cleanup_expired()
+            
+            # 1시간마다 실행
+            await asyncio.sleep(3600)
         except Exception as e:
             logger.error(f"캐시 정리 중 오류: {e}")
-            await asyncio.sleep(300) 
+            await asyncio.sleep(60)  # 오류 시 1분 후 재시도
+
+
+# 전역 캐시 인스턴스
+memory_cache = MemoryCache()
+hybrid_cache = HybridCache()
+
+class CacheKeys:
+    """캐시 키 상수"""
+    USER_PROFILE = "user_profile"
+    DASHBOARD_STATS = "dashboard_stats"
+    LABOR_STATS = "labor_stats"
+    CONTRACT_STATS = "contract_stats"
+    FINANCIAL_STATS = "financial_stats"
+    PROJECT_STATS = "project_stats"
+    VENDOR_STATS = "vendor_stats"
+
+
+def get_cache():
+    """캐시 인스턴스 반환"""
+    return hybrid_cache 

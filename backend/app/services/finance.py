@@ -1,19 +1,19 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
-from ..models.finance import FinancialTransaction, FinancialDocument
-from ..schemas.finance import (
-    FinancialTransactionCreate,
-    FinancialTransactionUpdate,
+from ..models.financial import FinancialRecord, FinancialDocument
+from ..schemas.financial import (
+    FinancialRecordCreate,
+    FinancialRecordUpdate,
     FinancialDocumentCreate
 )
 
 def create_transaction(
     db: Session,
-    transaction: FinancialTransactionCreate
-) -> FinancialTransaction:
+    transaction: FinancialRecordCreate
+) -> FinancialRecord:
     """새로운 재무 거래를 등록합니다."""
-    db_transaction = FinancialTransaction(**transaction.dict())
+    db_transaction = FinancialRecord(**transaction.dict())
     db.add(db_transaction)
     db.commit()
     db.refresh(db_transaction)
@@ -26,31 +26,31 @@ def get_transactions(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     transaction_type: Optional[str] = None
-) -> List[FinancialTransaction]:
+) -> List[FinancialRecord]:
     """재무 거래 목록을 조회합니다."""
-    query = db.query(FinancialTransaction)
+    query = db.query(FinancialRecord)
     if start_date:
-        query = query.filter(FinancialTransaction.date >= start_date)
+        query = query.filter(FinancialRecord.transaction_date >= start_date)
     if end_date:
-        query = query.filter(FinancialTransaction.date <= end_date)
+        query = query.filter(FinancialRecord.transaction_date <= end_date)
     if transaction_type:
-        query = query.filter(FinancialTransaction.type == transaction_type)
+        query = query.filter(FinancialRecord.type == transaction_type)
     return query.offset(skip).limit(limit).all()
 
 def get_transaction(
     db: Session,
     transaction_id: int
-) -> Optional[FinancialTransaction]:
+) -> Optional[FinancialRecord]:
     """특정 재무 거래의 정보를 조회합니다."""
-    return db.query(FinancialTransaction).filter(
-        FinancialTransaction.id == transaction_id
+    return db.query(FinancialRecord).filter(
+        FinancialRecord.id == transaction_id
     ).first()
 
 def update_transaction(
     db: Session,
     transaction_id: int,
-    transaction: FinancialTransactionUpdate
-) -> Optional[FinancialTransaction]:
+    transaction: FinancialRecordUpdate
+) -> Optional[FinancialRecord]:
     """재무 거래 정보를 업데이트합니다."""
     db_transaction = get_transaction(db, transaction_id)
     if db_transaction:

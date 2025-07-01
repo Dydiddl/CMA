@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Optional
 import os
 from pathlib import Path
-import PyPDF2
 import pandas as pd
 import re
 import tabula

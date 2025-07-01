@@ -1,1 +1,3 @@
 # ...existing code from models.py...
+
+from .user import User

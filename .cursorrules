@@ -23,6 +23,21 @@ CMA는 건설 공사 내역서 자동화 시스템으로, 계약 관리, 재무 
 - **테스트**: 50% 완료
 - **성능 최적화**: 40% 완료
 
+### 🎯 최우선 목표 (2025년 1-2월)
+**핵심 기능 완성 및 안정화** - 기본적인 건설 관리 시스템으로 사용 가능한 상태 달성
+
+#### 즉시 실행 (1-2주)
+- [ ] **계약 관리 모듈 완성** - 계약 CRUD, 상태 추적, 자동 생성
+- [ ] **재무 관리 모듈 완성** - 예산 관리, 비용 분석, 보고서 생성
+- [ ] **노무 관리 모듈 완성** - 인력 관리, 시간 추적, 임금 계산
+- [ ] **ASCR 모듈 통합** - PDF 처리, 목차 생성, 문서 자동화
+
+#### 단기 목표 (2-4주)
+- [ ] **기본 UI/UX 완성** - 대시보드, 네비게이션, 반응형 디자인
+- [ ] **성능 최적화** - API 응답 시간 500ms 이내
+- [ ] **테스트 커버리지** - 70% 이상 달성
+- [ ] **보안 강화** - 인증/인가 시스템 완성
+
 ### 🛠 기술 스택 (2025년 1월 기준)
 
 #### Frontend
@@ -44,9 +59,19 @@ CMA는 건설 공사 내역서 자동화 시스템으로, 계약 관리, 재무 
 - **Pandas**: 2.3.0 (데이터 처리)
 - **OpenPyXL**: 3.1.5 (Excel 처리)
 - **XlsxWriter**: 3.2.3 (Excel 생성)
-- **PyPDF2/PyMuPDF**: PDF 처리 (ASCR 모듈)
+- **pypdf/PyMuPDF**: PDF 처리 (ASCR 모듈)
 - **Redis**: 캐싱 및 세션 관리
 - **Celery**: 비동기 작업 처리
+
+#### Desktop (PySide6)
+- **PySide6**: 6.6.1 (Qt 기반 GUI 프레임워크)
+- **SQLAlchemy**: 2.0.41 (로컬 데이터베이스 ORM)
+- **Pandas**: 2.3.0 (데이터 처리)
+- **OpenPyXL**: 3.1.5 (Excel 처리)
+- **pypdf**: 3.17.4 (PDF 처리)
+- **psycopg2-binary**: 2.9.10 (PostgreSQL 연결)
+- **redis**: 5.2.1 (캐싱)
+- **psutil**: 6.1.0 (시스템 모니터링)
 
 #### Database
 - **PostgreSQL**: 14+ (로컬 개발)
@@ -59,6 +84,152 @@ CMA는 건설 공사 내역서 자동화 시스템으로, 계약 관리, 재무 
 - **threading**: I/O 집약적 작업
 - **Redis**: 분산 캐싱
 - **Connection Pooling**: 데이터베이스 연결 최적화
+
+### 🆕 가상환경 관리 규칙 (MANDATORY)
+
+#### 분리된 가상환경 전략
+```bash
+# 프로젝트 구조별 가상환경 분리
+CMA/
+├── backend/
+│   ├── venv/                    # 백엔드 전용 가상환경
+│   ├── requirements.txt         # 백엔드 의존성
+│   └── ...
+├── desktop/
+│   ├── venv/                    # 데스크톱 앱 전용 가상환경
+│   ├── requirements.txt         # 데스크톱 의존성
+│   └── ...
+└── frontend/                    # Node.js 기반 (별도 패키지 관리)
+```
+
+#### 가상환경 활성화 규칙
+```bash
+# 백엔드 개발 시
+cd backend
+source venv/bin/activate  # Linux/Mac
+# 또는 venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# 데스크톱 앱 개발 시 (새 터미널)
+cd desktop
+source venv/bin/activate  # Linux/Mac
+# 또는 venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+python main.py
+```
+
+#### 의존성 충돌 방지 규칙
+```python
+# ✅ 권장: 모듈별 독립적 의존성 관리
+# backend/requirements.txt - 웹 서버용
+fastapi==0.115.12
+uvicorn==0.34.3
+sqlalchemy==2.0.41
+# ... 웹 서버 관련 패키지
+
+# desktop/requirements.txt - GUI 앱용
+PySide6==6.6.1
+sqlalchemy==2.0.41
+pandas==2.3.0
+# ... GUI 관련 패키지
+```
+
+#### 개발 워크플로우 규칙
+```bash
+# 1. 백엔드 서버 실행
+cd backend
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 2. 데스크톱 앱 실행 (새 터미널)
+cd desktop
+source venv/bin/activate
+python main.py
+
+# 3. 프론트엔드 개발 (새 터미널)
+cd frontend
+npm install
+npm run dev
+```
+
+#### 환경 설정 검증 규칙
+```python
+# 각 모듈별 환경 검증 함수
+def verify_backend_environment():
+    """백엔드 환경 검증"""
+    try:
+        import fastapi, uvicorn, sqlalchemy
+        return True
+    except ImportError:
+        return False
+
+def verify_desktop_environment():
+    """데스크톱 환경 검증"""
+    try:
+        import PySide6, sqlalchemy, pandas
+        return True
+    except ImportError:
+        return False
+
+# 환경 검증 실행
+if not verify_backend_environment():
+    print("백엔드 가상환경을 활성화하세요: cd backend && source venv/bin/activate")
+if not verify_desktop_environment():
+    print("데스크톱 가상환경을 활성화하세요: cd desktop && source venv/bin/activate")
+```
+
+#### 패키지 관리 규칙
+```bash
+# 백엔드 패키지 업데이트
+cd backend
+source venv/bin/activate
+pip install --upgrade package_name
+pip freeze > requirements.txt
+
+# 데스크톱 패키지 업데이트
+cd desktop
+source venv/bin/activate
+pip install --upgrade package_name
+pip freeze > requirements.txt
+
+# 공통 패키지 버전 동기화 (필요시)
+# sqlalchemy, pandas 등 공통 의존성은 동일한 버전 유지
+```
+
+#### 배포 환경 규칙
+```bash
+# 백엔드 배포
+cd backend
+source venv/bin/activate
+pip install -r requirements.txt
+gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
+
+# 데스크톱 앱 배포
+cd desktop
+source venv/bin/activate
+pip install -r requirements.txt
+pyinstaller --onefile --windowed main.py
+```
+
+#### 문제 해결 규칙
+```bash
+# 가상환경 문제 해결
+# 1. 가상환경 재생성
+rm -rf venv/
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 2. 패키지 충돌 해결
+pip uninstall conflicting_package
+pip install correct_package
+
+# 3. 환경 변수 확인
+echo $VIRTUAL_ENV
+which python
+python --version
+```
 
 ## 🚨 CRITICAL RULES - MUST FOLLOW
 
@@ -344,7 +515,79 @@ export const ConstructionContractComponent: React.FC<{
 };
 ```
 
-### 🆕 4. 이모지 사용 최소화 규칙 (MANDATORY)
+### 🆕 4. PDF 라이브러리 사용 규칙 (MANDATORY)
+
+#### PDF 라이브러리 선택 기준
+```python
+# ✅ 권장: 활발히 지원되는 PDF 라이브러리
+ALLOWED_PDF_LIBRARIES = {
+    "pypdf": "기본 PDF 처리 (텍스트 추출, 페이지 분할 등)",
+    "tabula-py": "PDF 테이블 추출",
+    "PyMuPDF (fitz)": "고성능 PDF 처리, 이미지 추출",
+    "pdfplumber": "PDF 텍스트 및 테이블 추출",
+    "pdf2image": "PDF를 이미지로 변환",
+    "pdf2docx": "PDF를 Word 문서로 변환"
+}
+
+# ❌ 금지: 더 이상 지원되지 않는 라이브러리
+DEPRECATED_PDF_LIBRARIES = {
+    "PyPDF2": "더 이상 업데이트되지 않음 - pypdf로 대체됨",
+    "pdfminer": "구버전 - pdfplumber 사용 권장"
+}
+```
+
+#### PDF 라이브러리 사용 규칙
+```python
+# ✅ 권장: pypdf 사용
+from pypdf import PdfReader, PdfWriter
+
+def extract_pdf_text(pdf_path: str) -> str:
+    """PDF 텍스트 추출 - pypdf 사용"""
+    reader = PdfReader(pdf_path)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() + "\n"
+    return text
+
+# ✅ 권장: tabula-py 사용 (테이블 추출)
+import tabula
+
+def extract_pdf_tables(pdf_path: str) -> List[pd.DataFrame]:
+    """PDF 테이블 추출 - tabula-py 사용"""
+    tables = tabula.read_pdf(pdf_path, pages='all')
+    return tables
+
+# ✅ 권장: PyMuPDF 사용 (고성능 처리)
+import fitz
+
+def process_pdf_high_performance(pdf_path: str) -> Dict[str, Any]:
+    """고성능 PDF 처리 - PyMuPDF 사용"""
+    doc = fitz.open(pdf_path)
+    # 고성능 처리 로직
+    return {"pages": len(doc), "text": doc.get_text()}
+
+# ❌ 금지: PyPDF2 사용
+# from PyPDF2 import PdfReader, PdfWriter  # 더 이상 지원되지 않음
+```
+
+#### PDF 라이브러리 선택 가이드
+```python
+# PDF 처리 목적별 라이브러리 선택
+PDF_LIBRARY_SELECTION = {
+    "텍스트 추출": "pypdf",  # 기본 텍스트 추출
+    "테이블 추출": "tabula-py",  # 복잡한 테이블 구조
+    "고성능 처리": "PyMuPDF",  # 대용량 파일, 이미지 추출
+    "정밀한 텍스트": "pdfplumber",  # 레이아웃 보존
+    "이미지 변환": "pdf2image",  # PDF를 이미지로
+    "문서 변환": "pdf2docx"  # PDF를 Word로
+}
+
+def select_pdf_library(purpose: str) -> str:
+    """목적에 따른 PDF 라이브러리 선택"""
+    return PDF_LIBRARY_SELECTION.get(purpose, "pypdf")
+```
+
+### 🆕 5. 이모지 사용 최소화 규칙 (MANDATORY)
 
 #### 이모지 사용 제한 사유
 - **크로스 플랫폼 호환성**: macOS, Windows, Linux 간 이모지 렌더링 차이
@@ -1014,7 +1257,314 @@ class TestASCRProcessor:
 - [ ] 통계 기능 강화
 - [ ] 네이티브 모듈 전환
 
-### 🆕 15. 규칙 갱신 프로세스
+### 🆕 15. 개발 환경 설정 규칙 (MANDATORY)
+
+#### 개발 시작 전 환경 확인 절차
+```bash
+# 1. Python 환경 확인
+python --version  # 3.12+ 확인
+pip --version     # 최신 버전 확인
+
+# 2. 가상환경 활성화 확인
+source backend/venv/bin/activate  # Linux/Mac
+# 또는 backend\venv\Scripts\activate  # Windows
+
+# 3. 의존성 설치 확인
+pip install -r backend/requirements.txt
+
+# 4. 데이터베이스 연결 확인
+python -c "from backend.app.db.database import engine; print('DB 연결 성공')"
+
+# 5. Node.js 환경 확인 (프론트엔드 개발 시)
+node --version    # 18+ 확인
+npm --version     # 최신 버전 확인
+
+# 6. 프론트엔드 의존성 설치 확인
+cd frontend && npm install
+```
+
+#### 환경 설정 검증 함수
+```python
+def verify_development_environment():
+    """개발 환경 검증"""
+    import sys
+    import subprocess
+    
+    checks = {
+        "python_version": sys.version_info >= (3, 12),
+        "virtual_env": "venv" in sys.prefix,
+        "dependencies": check_dependencies(),
+        "database": check_database_connection(),
+        "node_js": check_node_js()
+    }
+    
+    return all(checks.values())
+
+def check_dependencies():
+    """의존성 확인"""
+    try:
+        import fastapi, sqlalchemy, pydantic
+        return True
+    except ImportError:
+        return False
+
+def check_database_connection():
+    """데이터베이스 연결 확인"""
+    try:
+        from backend.app.db.database import engine
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        return True
+    except Exception:
+        return False
+```
+
+#### 개발 시작 전 체크리스트
+- [ ] Python 3.12+ 설치 확인
+- [ ] 가상환경 생성 및 활성화
+- [ ] 백엔드 의존성 설치 완료
+- [ ] 데이터베이스 연결 테스트 성공
+- [ ] Node.js 18+ 설치 확인 (프론트엔드 개발 시)
+- [ ] 프론트엔드 의존성 설치 완료
+- [ ] 개발 서버 실행 테스트
+
+### 🆕 16. PySide6 데스크톱 앱 개발 규칙 (MANDATORY)
+
+#### PySide6 개발 기본 원칙
+```python
+# PySide6 개발 시 반드시 준수할 규칙
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PySide6.QtGui import QFont, QIcon, QPixmap
+import sys
+import asyncio
+from typing import Optional, Dict, Any
+
+class CMAMainWindow(QMainWindow):
+    """CMA 메인 윈도우 - 반드시 상속"""
+    
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("CMA - Construction Management System")
+        self.setGeometry(100, 100, 1200, 800)
+        self.setup_ui()
+        self.setup_connections()
+    
+    def setup_ui(self):
+        """UI 초기화 - 반드시 구현"""
+        # 중앙 위젯 설정
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        
+        # 레이아웃 설정
+        main_layout = QVBoxLayout(central_widget)
+        
+        # 메뉴바 설정
+        self.setup_menu_bar()
+        
+        # 툴바 설정
+        self.setup_toolbar()
+        
+        # 상태바 설정
+        self.setup_status_bar()
+    
+    def setup_connections(self):
+        """시그널-슬롯 연결 - 반드시 구현"""
+        pass
+    
+    def setup_menu_bar(self):
+        """메뉴바 설정"""
+        menubar = self.menuBar()
+        
+        # 파일 메뉴
+        file_menu = menubar.addMenu("파일")
+        # 편집 메뉴
+        edit_menu = menubar.addMenu("편집")
+        # 도구 메뉴
+        tools_menu = menubar.addMenu("도구")
+        # 도움말 메뉴
+        help_menu = menubar.addMenu("도움말")
+    
+    def setup_toolbar(self):
+        """툴바 설정"""
+        toolbar = self.addToolBar("메인 툴바")
+        # 툴바 아이템 추가
+    
+    def setup_status_bar(self):
+        """상태바 설정"""
+        self.statusBar().showMessage("준비")
+```
+
+#### PySide6 비동기 처리 규칙
+```python
+class AsyncWorker(QThread):
+    """비동기 작업 처리 클래스 - 반드시 사용"""
+    
+    # 시그널 정의
+    progress_updated = pyqtSignal(int)
+    work_finished = pyqtSignal(object)
+    error_occurred = pyqtSignal(str)
+    
+    def __init__(self, work_function, *args, **kwargs):
+        super().__init__()
+        self.work_function = work_function
+        self.args = args
+        self.kwargs = kwargs
+    
+    def run(self):
+        """작업 실행"""
+        try:
+            result = self.work_function(*self.args, **self.kwargs)
+            self.work_finished.emit(result)
+        except Exception as e:
+            self.error_occurred.emit(str(e))
+
+class PySide6AsyncHandler:
+    """PySide6 비동기 처리 핸들러"""
+    
+    def __init__(self, main_window):
+        self.main_window = main_window
+        self.workers = []
+    
+    def execute_async_task(self, task_func, *args, **kwargs):
+        """비동기 작업 실행"""
+        worker = AsyncWorker(task_func, *args, **kwargs)
+        worker.work_finished.connect(self.on_task_completed)
+        worker.error_occurred.connect(self.on_task_error)
+        worker.start()
+        
+        self.workers.append(worker)
+        return worker
+    
+    def on_task_completed(self, result):
+        """작업 완료 처리"""
+        self.main_window.statusBar().showMessage("작업 완료")
+        # 결과 처리 로직
+    
+    def on_task_error(self, error_message):
+        """작업 오류 처리"""
+        self.main_window.statusBar().showMessage(f"오류: {error_message}")
+        # 오류 처리 로직
+```
+
+#### PySide6 데이터베이스 연동 규칙
+```python
+class PySide6DatabaseManager:
+    """PySide6 데이터베이스 관리자"""
+    
+    def __init__(self):
+        self.engine = None
+        self.session = None
+    
+    def initialize_database(self, database_url: str):
+        """데이터베이스 초기화"""
+        try:
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            
+            self.engine = create_engine(database_url)
+            Session = sessionmaker(bind=self.engine)
+            self.session = Session()
+            
+            return True
+        except Exception as e:
+            print(f"데이터베이스 초기화 실패: {e}")
+            return False
+    
+    def execute_query(self, query_func):
+        """쿼리 실행"""
+        try:
+            result = query_func(self.session)
+            return result
+        except Exception as e:
+            print(f"쿼리 실행 실패: {e}")
+            return None
+        finally:
+            self.session.close()
+```
+
+#### PySide6 UI 컴포넌트 규칙
+```python
+class ContractManagementWidget(QWidget):
+    """계약 관리 위젯 - 모듈별 위젯 패턴"""
+    
+    def __init__(self, db_manager: PySide6DatabaseManager):
+        super().__init__()
+        self.db_manager = db_manager
+        self.setup_ui()
+        self.load_data()
+    
+    def setup_ui(self):
+        """UI 설정"""
+        layout = QVBoxLayout(self)
+        
+        # 검색 영역
+        search_layout = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("계약명 또는 번호로 검색...")
+        search_layout.addWidget(self.search_input)
+        
+        # 버튼 영역
+        button_layout = QHBoxLayout()
+        self.add_button = QPushButton("새 계약")
+        self.edit_button = QPushButton("수정")
+        self.delete_button = QPushButton("삭제")
+        button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.edit_button)
+        button_layout.addWidget(self.delete_button)
+        
+        # 테이블 영역
+        self.contract_table = QTableWidget()
+        self.setup_table()
+        
+        # 레이아웃 조립
+        layout.addLayout(search_layout)
+        layout.addLayout(button_layout)
+        layout.addWidget(self.contract_table)
+    
+    def setup_table(self):
+        """테이블 설정"""
+        headers = ["계약 ID", "계약명", "계약금액", "계약일", "상태"]
+        self.contract_table.setColumnCount(len(headers))
+        self.contract_table.setHorizontalHeaderLabels(headers)
+    
+    def load_data(self):
+        """데이터 로드"""
+        # 비동기로 데이터 로드
+        pass
+```
+
+#### PySide6 성능 최적화 규칙
+```python
+class PySide6PerformanceOptimizer:
+    """PySide6 성능 최적화"""
+    
+    @staticmethod
+    def optimize_table_performance(table: QTableWidget):
+        """테이블 성능 최적화"""
+        # 가상화 설정
+        table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        
+        # 선택 모드 설정
+        table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        table.setSelectionMode(QAbstractItemView.SingleSelection)
+        
+        # 정렬 최적화
+        table.setSortingEnabled(True)
+    
+    @staticmethod
+    def batch_update_table(table: QTableWidget, data: List[Dict]):
+        """테이블 배치 업데이트"""
+        table.setRowCount(len(data))
+        
+        for row, item_data in enumerate(data):
+            for col, value in enumerate(item_data.values()):
+                table_item = QTableWidgetItem(str(value))
+                table.setItem(row, col, table_item)
+```
+
+### 🆕 17. 규칙 갱신 프로세스
 
 #### 규칙 갱신 트리거
 1. **새로운 기능 추가**: 새로운 모듈이나 기능이 추가될 때
@@ -1035,9 +1585,16 @@ class TestASCRProcessor:
 #### 규칙 버전 관리
 ```yaml
 # .cursorrules 버전 정보
-version: "3.1"
+version: "3.2"
 last_updated: "2025-01-23"
 changelog:
+  - version: "3.2"
+    date: "2025-01-23"
+    changes:
+      - "단기 목표 및 최우선 목표 추가"
+      - "프로젝트 진행률 기준 업데이트"
+      - "PySide6 데스크톱 앱 개발 전략 추가"
+      - "웹 확장 전략 문서화"
   - version: "3.1"
     date: "2025-01-23"
     changes:

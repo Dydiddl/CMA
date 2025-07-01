@@ -17,10 +17,13 @@ class WorkLogBase(BaseModel):
             raise ValueError('종료시간은 시작시간보다 이후여야 합니다')
         return v
 
-    @validator('total_amount')
-    def calculate_total_amount(cls, v, values):
-        if 'work_hours' in values and 'daily_wage' in values:
-            return values['work_hours'] * values['daily_wage']
+    @validator('work_hours')
+    def validate_work_hours(cls, v, values):
+        if 'start_time' in values and 'end_time' in values:
+            time_diff = values['end_time'] - values['start_time']
+            calculated_hours = time_diff.total_seconds() / 3600
+            if abs(v - calculated_hours) > 0.1:  # 6분 이상 차이나면 경고
+                raise ValueError('작업시간이 시작/종료시간과 일치하지 않습니다')
         return v
 
 class WorkLogCreate(WorkLogBase):
@@ -73,5 +76,27 @@ class Labor(LaborBase):
     updated_at: datetime
     work_logs: List[WorkLog] = []
 
+    class Config:
+        from_attributes = True
+
+class LaborResponse(LaborBase):
+    """근로자 응답 스키마"""
+    id: int = Field(..., description="근로자 ID")
+    created_at: datetime = Field(..., description="생성일")
+    updated_at: datetime = Field(..., description="수정일")
+    work_logs: List[WorkLog] = Field(default=[], description="작업일지 목록")
+    
+    class Config:
+        from_attributes = True
+
+class LaborListResponse(BaseModel):
+    """근로자 목록 응답 스키마"""
+    status: str = Field(default="success", description="응답 상태")
+    data: List[LaborResponse] = Field(..., description="근로자 목록")
+    total: int = Field(..., description="전체 근로자 수")
+    page: int = Field(..., description="현재 페이지")
+    size: int = Field(..., description="페이지 크기")
+    message: Optional[str] = Field(None, description="응답 메시지")
+    
     class Config:
         from_attributes = True 

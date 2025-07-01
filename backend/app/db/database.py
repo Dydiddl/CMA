@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # PostgreSQL 데이터베이스 엔진 생성 (성능 최적화 설정 포함)
 engine = create_engine(
-    settings.SQLALCHEMY_DATABASE_URI,
+    settings.DATABASE_URL,
     poolclass=QueuePool,
     pool_size=20,  # 기본 커넥션 풀 크기
     max_overflow=10,  # 추가로 생성 가능한 커넥션 수

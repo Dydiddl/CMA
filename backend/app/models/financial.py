@@ -6,7 +6,8 @@ from .base import BaseModel
 class FinancialRecord(BaseModel):
     __tablename__ = "financial_records"
 
-    contract_id = Column(Integer, ForeignKey("contracts.id"))
+    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=True)
     transaction_date = Column(Date)
     amount = Column(Float)
     type = Column(String)  # 수입, 지출
@@ -18,7 +19,9 @@ class FinancialRecord(BaseModel):
 
     # 관계 설정
     contract = relationship("Contract", back_populates="financial_records")
+    project = relationship("Project", back_populates="financial_records")
     vendor = relationship("Vendor", back_populates="financial_records")
+    documents = relationship("FinancialDocument", back_populates="financial_record", cascade="all, delete-orphan")
 
 class FinancialDocument(BaseModel):
     __tablename__ = "financial_documents"

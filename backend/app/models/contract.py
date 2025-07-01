@@ -28,9 +28,11 @@ class Contract(BaseModel):
     
     # 외래키
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, comment="거래처 ID")
+    project_id = Column(String, ForeignKey("projects.id"), nullable=True, comment="프로젝트 ID")
     
     # 관계 설정
     vendor = relationship("Vendor", back_populates="contracts")
+    project = relationship("Project", back_populates="contracts")
     documents = relationship("ContractDocument", back_populates="contract", cascade="all, delete-orphan")
     financial_records = relationship("FinancialRecord", back_populates="contract", cascade="all, delete-orphan")
     labors = relationship("Labor", back_populates="contract", cascade="all, delete-orphan")

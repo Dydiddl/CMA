@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from ....main import app
-from ....db.base import get_db
+from app.api.deps import get_db
 from ....schemas.labor import LaborCreate, WorkLogCreate
 
 client = TestClient(app)
