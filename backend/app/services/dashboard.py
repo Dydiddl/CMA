@@ -13,7 +13,6 @@ import logging
 from app.models.contract import Contract
 from app.models.financial import FinancialRecord
 from app.models.labor import Labor
-from app.models.worker import Worker
 from app.models.user import User
 from app.schemas.dashboard import (
     DashboardResponse,
@@ -169,15 +168,15 @@ class DashboardService:
         """노무 요약 정보 조회"""
         try:
             # 총 근로자 수
-            total_workers = self.db.query(Worker).filter(
-                Worker.user_id == user_id
+            total_workers = self.db.query(Labor).filter(
+                Labor.user_id == user_id
             ).count()
             
             # 활성 근로자 수
-            active_workers = self.db.query(Worker).filter(
+            active_workers = self.db.query(Labor).filter(
                 and_(
-                    Worker.user_id == user_id,
-                    Worker.status == "active"
+                    Labor.user_id == user_id,
+                    Labor.status == "active"
                 )
             ).count()
             
@@ -195,9 +194,9 @@ class DashboardService:
             
             # 직종별 근로자 수
             position_counts = self.db.query(
-                Worker.position,
-                func.count(Worker.id)
-            ).filter(Worker.user_id == user_id).group_by(Worker.position).all()
+                Labor.position,
+                func.count(Labor.id)
+            ).filter(Labor.user_id == user_id).group_by(Labor.position).all()
             
             workers_by_position = {position: count for position, count in position_counts}
             
@@ -379,4 +378,33 @@ class DashboardService:
             return alerts
         except Exception as e:
             logger.error(f"알림 조회 실패: {e}")
-            return [] 
+            return []
+
+    def get_monthly_financial_data(self, year: int, month: int) -> Dict[str, Any]:
+        """월별 재무 데이터 조회"""
+        try:
+            # 해당 월의 재무 기록 조회
+            start_date = datetime(year, month, 1)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1)
+            else:
+                end_date = datetime(year, month + 1, 1)
+            
+            records = self.db.query(FinancialRecord).filter(
+                FinancialRecord.transaction_date >= start_date,
+                FinancialRecord.transaction_date < end_date
+            ).all()
+            
+            # 수입/지출 분류
+            income = sum(r.amount for r in records if r.type == "수입" and r.amount)
+            expense = sum(r.amount for r in records if r.type == "지출" and r.amount)
+            
+            return {
+                "income": income,
+                "expense": expense,
+                "profit": income - expense,
+                "count": len(records)
+            }
+        except Exception as e:
+            logger.error(f"월별 재무 데이터 조회 실패: {e}")
+            return {"income": 0, "expense": 0, "profit": 0, "count": 0} 

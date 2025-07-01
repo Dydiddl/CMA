@@ -27,11 +27,13 @@ pandas==2.3.0
 XlsxWriter==3.2.3
 lxml==5.4.0
 pypdf==3.17.4
-tabula-py==2.9.0
+tabula-py==2.10.0
 pdf2docx==0.5.8
+PyMuPDF==1.26.1
 
-# Performance Monitoring
+# Performance Monitoring & Caching
 psutil==6.1.0
+redis==5.2.1
 
 # Utilities
 python-dotenv==1.1.0
@@ -39,6 +41,7 @@ email_validator==2.2.0
 python-dateutil==2.9.0.post0
 pytz==2025.2
 tzdata==2025.2
+numpy==2.3.0
 
 # Async Support
 anyio==4.9.0

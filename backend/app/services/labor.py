@@ -20,12 +20,15 @@ def get_labors(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    status: Optional[str] = None
+    status: Optional[str] = None,
+    contract_id: Optional[str] = None
 ) -> List[Labor]:
     """노무자 목록을 조회합니다."""
     query = db.query(Labor)
     if status:
         query = query.filter(Labor.status == status)
+    if contract_id:
+        query = query.filter(Labor.contract_id == contract_id)
     return query.offset(skip).limit(limit).all()
 
 def get_labor(db: Session, labor_id: int) -> Optional[Labor]:

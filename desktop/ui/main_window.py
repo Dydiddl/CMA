@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QTabWidget, QMenuBar, QStatusBar, QToolBar,
     QLabel, QPushButton, QSplitter, QFrame, QMessageBox,
-    QApplication
+    QApplication, QDialog
 )
 from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QIcon, QFont, QAction, QFontDatabase
@@ -134,9 +134,24 @@ class MainWindow(QMainWindow):
         login_dialog = LoginDialog(self)
         login_dialog.login_successful.connect(self.on_login_success)
         
-        if login_dialog.exec() != LoginDialog.Accepted:
-            # 로그인 취소 시 앱 종료
-            self.close()
+        result = login_dialog.exec()
+        if result != QDialog.DialogCode.Accepted:
+            # 로그인 취소 또는 실패 시 앱 완전 종료
+            logger.info("로그인 취소 또는 실패로 인한 애플리케이션 종료")
+            # 즉시 애플리케이션 종료
+            QApplication.instance().quit()
+            # 강제 종료를 위한 sys.exit 추가
+            import sys
+            sys.exit(0)
+            return
+        
+        # 로그인 성공 시에만 계속 진행
+        if not self.current_user:
+            logger.warning("로그인 성공했지만 사용자 정보가 없습니다. 애플리케이션을 종료합니다.")
+            QApplication.instance().quit()
+            import sys
+            sys.exit(0)
+            return
     
     def on_login_success(self, result: Dict[str, Any]):
         """로그인 성공 처리"""

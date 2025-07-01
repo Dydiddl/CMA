@@ -44,6 +44,13 @@ build/
 .env
 .env.*
 
+# 데이터베이스 파일들
+*.db
+*.sqlite
+*.sqlite3
+cma_backend.db
+cma_desktop.db
+
 # backend 임시/캐시/DB
 backend/temp/
 backend/.mypy_cache/
@@ -52,6 +59,12 @@ backend/.coverage
 backend/.env
 backend/.DS_Store
 backend/*.sqlite3
+backend/cma_backend.db
+backend/cma_desktop.db
+
+# desktop 임시/캐시/DB
+desktop/cma_backend.db
+desktop/cma_desktop.db
 
 # frontend
 frontend/node_modules/

@@ -8,19 +8,31 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# PostgreSQL 데이터베이스 엔진 생성 (성능 최적화 설정 포함)
-engine = create_engine(
-    settings.DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=20,  # 기본 커넥션 풀 크기
-    max_overflow=10,  # 추가로 생성 가능한 커넥션 수
-    pool_timeout=30,  # 커넥션 대기 시간
-    pool_recycle=1800,  # 커넥션 재사용 시간 (30분)
-    echo_pool=True,  # 풀 디버깅
-    execution_options={
-        "isolation_level": "READ COMMITTED"  # 격리 수준 설정
-    }
-)
+# 데이터베이스 URL에서 SQLite인지 확인
+is_sqlite = settings.DATABASE_URL.startswith('sqlite')
+
+# 데이터베이스 엔진 생성 (SQLite 호환성 고려)
+if is_sqlite:
+    # SQLite용 설정
+    engine = create_engine(
+        settings.DATABASE_URL,
+        echo_pool=True,  # 풀 디버깅
+        connect_args={"check_same_thread": False}  # SQLite 멀티스레드 지원
+    )
+else:
+    # PostgreSQL용 설정 (성능 최적화 설정 포함)
+    engine = create_engine(
+        settings.DATABASE_URL,
+        poolclass=QueuePool,
+        pool_size=20,  # 기본 커넥션 풀 크기
+        max_overflow=10,  # 추가로 생성 가능한 커넥션 수
+        pool_timeout=30,  # 커넥션 대기 시간
+        pool_recycle=1800,  # 커넥션 재사용 시간 (30분)
+        echo_pool=True,  # 풀 디버깅
+        execution_options={
+            "isolation_level": "READ COMMITTED"  # 격리 수준 설정 (PostgreSQL만)
+        }
+    )
 
 # 데이터베이스 성능 모니터링을 위한 이벤트 리스너
 @event.listens_for(engine, "before_cursor_execute")
@@ -70,14 +82,21 @@ def init_db():
     # 테이블 생성
     Base.metadata.create_all(bind=engine)
     
-    # 성능 최적화를 위한 인덱스 생성
+    # 성능 최적화를 위한 인덱스 생성 (SQLite 호환)
     with engine.connect() as conn:
-        # 자주 조회되는 컬럼에 대한 인덱스 생성
-        conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
-            CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status);
-            CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date);
-            CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date);
-        """)
+        if is_sqlite:
+            # SQLite용 인덱스 생성
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_user_email ON users(email)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date)")
+        else:
+            # PostgreSQL용 인덱스 생성
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
+                CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status);
+                CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date);
+                CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date);
+            """)
     
     print("✅ 데이터베이스 테이블과 인덱스가 생성되었습니다.") 

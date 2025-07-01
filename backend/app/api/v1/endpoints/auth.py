@@ -57,11 +57,12 @@ async def login(
             token_type="bearer",
             user_id=user.id,
             email=user.email,
-            name=user.name
+            name=user.full_name
         )
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[로그인 오류]", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="로그인 중 오류가 발생했습니다."
@@ -94,7 +95,7 @@ async def register(
         return RegisterResponse(
             user_id=user.id,
             email=user.email,
-            name=user.name,
+            name=user.full_name,
             message="회원가입이 성공적으로 완료되었습니다."
         )
     except ValueError as e:
@@ -182,7 +183,7 @@ async def get_current_user_info(
         "data": {
             "id": current_user.id,
             "email": current_user.email,
-            "name": current_user.name,
+            "name": current_user.full_name,
             "role": current_user.role
         }
     } 

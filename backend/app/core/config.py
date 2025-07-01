@@ -24,11 +24,12 @@ class Settings(BaseSettings):
     # CORS 설정
     ALLOWED_HOSTS: List[str] = ["*"]
     
-    # 데이터베이스 설정
-    DATABASE_URL: str = "postgresql://user:password@localhost/cma_db"
+    # 데이터베이스 설정 (SQLite로 변경)
+    DATABASE_URL: str = "sqlite:///./cma_backend.db"
     
     # 보안 설정
     SECRET_KEY: str = "your-secret-key-here"
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # 파일 업로드 설정

@@ -1,11 +1,13 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .base import BaseModel
+from ..db.database import Base
+import uuid
 
-class Labor(BaseModel):
+class Labor(Base):
     __tablename__ = "labors"
 
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String)
     phone = Column(String)
     id_number = Column(String, unique=True)  # 주민번호 또는 외국인등록번호
@@ -13,18 +15,28 @@ class Labor(BaseModel):
     bank_account = Column(String)
     daily_wage = Column(Float)
     status = Column(String)  # 재직중, 퇴사 등
-    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True)
+    contract_id = Column(String, ForeignKey("contracts.id"), nullable=True)
     project_id = Column(String, ForeignKey("projects.id"), nullable=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True, comment="사용자 ID")
 
-    # 관계 설정
+    # 관계 설정 - 문자열로 참조하여 순환 참조 방지
     contract = relationship("Contract", back_populates="labors")
     project = relationship("Project", back_populates="labors")
     work_logs = relationship("WorkLog", back_populates="labor")
 
-class WorkLog(BaseModel):
+    @property
+    def total_cost(self):
+        """총 비용 계산"""
+        return self.daily_wage if self.daily_wage else 0.0
+
+    def __repr__(self):
+        return f"<Labor(id={self.id}, name={self.name}, daily_wage={self.daily_wage})>"
+
+class WorkLog(Base):
     __tablename__ = "work_logs"
 
-    labor_id = Column(Integer, ForeignKey("labors.id"))
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    labor_id = Column(String, ForeignKey("labors.id"))
     work_date = Column(Date)
     start_time = Column(DateTime)
     end_time = Column(DateTime)

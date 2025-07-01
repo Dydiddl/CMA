@@ -1,12 +1,14 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from .base import BaseModel
+from ..db.database import Base
 from datetime import datetime
+import uuid
 
-class Vendor(BaseModel):
+class Vendor(Base):
     __tablename__ = "vendors"
     
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False, index=True)
     business_number = Column(String, unique=True, nullable=False, index=True)
     representative = Column(String, nullable=False)
@@ -30,10 +32,11 @@ class Vendor(BaseModel):
     financial_records = relationship("FinancialRecord", back_populates="vendor")
     vendor_documents = relationship("VendorDocument", back_populates="vendor")
 
-class VendorDocument(BaseModel):
+class VendorDocument(Base):
     __tablename__ = "vendor_documents"
 
-    vendor_id = Column(Integer, ForeignKey("vendors.id"))
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    vendor_id = Column(String, ForeignKey("vendors.id"))
     document_type = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
     file_name = Column(String, nullable=False)

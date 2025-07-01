@@ -8,7 +8,8 @@ from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Float, Tex
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from app.models.base import BaseModel
+from ..db.database import Base
+import uuid
 
 class ProjectStatus(str, enum.Enum):
     """프로젝트 상태 열거형"""
@@ -28,11 +29,12 @@ class ProjectType(str, enum.Enum):
     MIXED_USE = "mixed_use"  # 복합용도
     OTHER = "other"  # 기타
 
-class Project(BaseModel):
+class Project(Base):
     """프로젝트 모델"""
     __tablename__ = "projects"
     
     # 기본 정보
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(255), nullable=False, index=True, comment="프로젝트명")
     project_number = Column(String(50), unique=True, nullable=False, index=True, comment="프로젝트 번호")
     description = Column(Text, nullable=True, comment="프로젝트 설명")
@@ -110,11 +112,12 @@ class Project(BaseModel):
         if self.total_budget and self.current_cost:
             self.remaining_budget = self.total_budget - self.current_cost
 
-class ProjectDocument(BaseModel):
+class ProjectDocument(Base):
     """프로젝트 문서 모델"""
     __tablename__ = "project_documents"
     
     # 기본 정보
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     title = Column(String(255), nullable=False, comment="문서 제목")
     file_name = Column(String(255), nullable=False, comment="파일명")
     file_path = Column(String(500), nullable=False, comment="파일 경로")
