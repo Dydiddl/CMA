@@ -1,0 +1,22 @@
+{
+  "database": {
+    "url": "sqlite:///cma_desktop.db",
+    "echo": false
+  },
+  "api": {
+    "base_url": "http://localhost:8000",
+    "timeout": 30
+  },
+  "ui": {
+    "theme": "light",
+    "language": "ko",
+    "window_size": [
+      1400,
+      900
+    ]
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "cma_desktop.log"
+  }
+}

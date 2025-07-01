@@ -8,12 +8,14 @@ PySide6 기반 건설 관리 시스템 UI
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QTabWidget, QMenuBar, QStatusBar, QToolBar,
-    QLabel, QPushButton, QSplitter, QFrame, QMessageBox
+    QLabel, QPushButton, QSplitter, QFrame, QMessageBox,
+    QApplication
 )
 from PySide6.QtCore import Qt, QSize, QTimer
-from PySide6.QtGui import QIcon, QFont, QAction
+from PySide6.QtGui import QIcon, QFont, QAction, QFontDatabase
 import logging
 from typing import Optional, Dict, Any
+import platform
 
 from .contract_tab import ContractTab
 from .financial_tab import FinancialTab
@@ -37,6 +39,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("CMA - Construction Management System")
         self.setGeometry(100, 100, 1400, 900)
         
+        # 한글 폰트 설정
+        self.setup_korean_font()
+        
         # API 클라이언트 초기화
         self.api_client = get_api_client()
         self.current_user = None
@@ -58,6 +63,56 @@ class MainWindow(QMainWindow):
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self.update_status)
         self.status_timer.start(30000)  # 30초마다 업데이트
+    
+    def setup_korean_font(self):
+        """한글 폰트 설정"""
+        try:
+            # Cursor에서 사용하는 폰트 설정
+            # 영어: JetBrains Mono, 한글: D2Coding
+            english_fonts = ["JetBrains Mono", "JetBrains Mono NL"]
+            korean_fonts = ["D2Coding", "D2Coding ligature"]
+            
+            # 사용 가능한 폰트 찾기
+            available_fonts = QFontDatabase().families()
+            
+            # 영어 폰트 선택
+            selected_english_font = None
+            for font in english_fonts:
+                if font in available_fonts:
+                    selected_english_font = font
+                    break
+            
+            # 한글 폰트 선택
+            selected_korean_font = None
+            for font in korean_fonts:
+                if font in available_fonts:
+                    selected_korean_font = font
+                    break
+            
+            if selected_english_font and selected_korean_font:
+                # 기본 폰트로 JetBrains Mono 설정
+                app = QApplication.instance()
+                if app:
+                    app.setFont(QFont(selected_english_font, 9))
+                    logger.info(f"[SUCCESS] 폰트 설정 완료 - 영어: {selected_english_font}, 한글: {selected_korean_font}")
+                else:
+                    logger.warning("[WARNING] QApplication 인스턴스를 찾을 수 없습니다")
+            elif selected_english_font:
+                app = QApplication.instance()
+                if app:
+                    app.setFont(QFont(selected_english_font, 9))
+                    logger.info(f"[SUCCESS] 영어 폰트 설정 완료: {selected_english_font}")
+            elif selected_korean_font:
+                app = QApplication.instance()
+                if app:
+                    app.setFont(QFont(selected_korean_font, 9))
+                    logger.info(f"[SUCCESS] 한글 폰트 설정 완료: {selected_korean_font}")
+            else:
+                logger.warning(f"[WARNING] JetBrains Mono 또는 D2Coding 폰트를 찾을 수 없습니다.")
+                logger.info(f"[INFO] 사용 가능한 폰트: {available_fonts[:10]}")
+                
+        except Exception as e:
+            logger.error(f"[ERROR] 폰트 설정 실패: {e}")
     
     def check_login(self) -> bool:
         """로그인 상태 확인"""
