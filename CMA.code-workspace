@@ -1,0 +1,254 @@
+{
+  "folders": [
+    {
+      "name": "CMA Project",
+      "path": "."
+    },
+    {
+      "name": "Backend",
+      "path": "./backend"
+    },
+    {
+      "name": "Frontend", 
+      "path": "./frontend"
+    },
+    {
+      "name": "Desktop",
+      "path": "./desktop"
+    },
+    {
+      "name": "ASCR Module",
+      "path": "./backend/app/services/ascr"
+    },
+    {
+      "name": "Documentation",
+      "path": "./docs"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "./backend/venv/bin/python",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "editor.formatOnSave": true,
+    "workbench.colorTheme": "Cursor Dark",
+    "workbench.iconTheme": "material-icon-theme",
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+      "*.py": "${capture}.py, ${capture}_test.py, test_${capture}.py",
+      "*.tsx": "${capture}.tsx, ${capture}.test.tsx, ${capture}.spec.tsx",
+      "*.ts": "${capture}.ts, ${capture}.test.ts, ${capture}.spec.ts"
+    },
+    "files.associations": {
+      "*.py": "python",
+      "*.tsx": "typescriptreact",
+      "*.ts": "typescript",
+      "*.json": "json",
+      "*.yaml": "yaml",
+      "*.yml": "yaml"
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/venv": true,
+      "**/__pycache__": true,
+      "**/.git": true,
+      "**/dist": true,
+      "**/build": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/venv/**": true,
+      "**/__pycache__/**": true,
+      "**/.git/**": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "ms-python.isort",
+      "ms-python.flake8",
+      "ms-vscode.vscode-typescript-next",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "eamodio.gitlens",
+      "mhutchie.git-graph",
+      "yzhang.markdown-all-in-one",
+      "formulahendry.auto-rename-tag",
+      "formulahendry.auto-close-tag",
+      "christian-kohler.path-intellisense",
+      "pkief.material-icon-theme",
+      "zhuangtongfa.material-theme"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: FastAPI (Backend)",
+        "type": "python",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "app.main:app",
+          "--reload",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000"
+        ],
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/backend"
+        },
+        "console": "integratedTerminal",
+        "justMyCode": false
+      },
+      {
+        "name": "Python: ASCR Module",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/backend/app/services/ascr/main.py",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/backend/app/services/ascr",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/backend"
+        },
+        "justMyCode": false
+      },
+      {
+        "name": "Python: Desktop App",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/desktop/main.py",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/desktop",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/desktop"
+        },
+        "justMyCode": false
+      },
+      {
+        "name": "Node.js: Frontend Dev Server",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/frontend/node_modules/.bin/vite",
+        "args": [
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "3000"
+        ],
+        "cwd": "${workspaceFolder}/frontend",
+        "console": "integratedTerminal",
+        "env": {
+          "NODE_ENV": "development"
+        }
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Full Stack: Backend + Frontend",
+        "configurations": [
+          "Python: FastAPI (Backend)",
+          "Node.js: Frontend Dev Server"
+        ],
+        "stopAll": true
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Setup Development Environment",
+        "type": "shell",
+        "command": "./scripts/setup-development-environment.sh",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Verify Environment",
+        "type": "shell",
+        "command": "./scripts/verify-environment.sh",
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Install Extensions",
+        "type": "shell",
+        "command": "./scripts/install-cursor-extensions.sh",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Backend: Install Dependencies",
+        "type": "shell",
+        "command": "backend/venv/bin/pip install -r backend/requirements.txt",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Frontend: Install Dependencies",
+        "type": "shell",
+        "command": "cd frontend && npm install",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Backend: Run Tests",
+        "type": "shell",
+        "command": "backend/venv/bin/pytest",
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Frontend: Run Tests",
+        "type": "shell",
+        "command": "cd frontend && npm test",
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      }
+    ]
+  }
+} 
