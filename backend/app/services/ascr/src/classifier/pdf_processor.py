@@ -20,7 +20,7 @@ class PDFProcessor:
         print(f"\n=== PDF 분류(로그 기록) 시작: {input_path} ===")
         
         # 입력 파일 존재 확인
-        if not os.path.exists(input_path):
+        if not Path(input_path).exists():
             print(f"오류: 입력 파일이 존재하지 않습니다: {input_path}")
             return
             

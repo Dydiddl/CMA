@@ -130,7 +130,7 @@ class StandardPriceFileRenamer:
         """변경 매핑을 파일로 저장"""
         mapping_file = self.directory_path / "rename_mapping.txt"
         
-        with open(mapping_file, 'w', encoding='utf-8') as f:
+        with open(mapping_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             f.write("표준품셈 파일명 변경 매핑\n")
             f.write("=" * 50 + "\n\n")
             

@@ -264,7 +264,7 @@ class OptimizedASCRProcessor:
         import json
         
         output_file = output_dir / "optimized_processing_results.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
         
         logger.info(f"최적화된 처리 결과 저장: {output_file}")

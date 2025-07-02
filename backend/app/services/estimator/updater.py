@@ -65,10 +65,10 @@ class EstimatorUpdater:
         if not self.updates_file.exists():
             return {}
             
-        with open(self.updates_file, 'r', encoding='utf-8') as f:
+        with open(self.updates_file, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             return json.load(f)
     
     def _save_updates(self, updates: Dict[str, Any]):
         """변경사항 저장"""
-        with open(self.updates_file, 'w', encoding='utf-8') as f:
+        with open(self.updates_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             json.dump(updates, f, ensure_ascii=False, indent=2)

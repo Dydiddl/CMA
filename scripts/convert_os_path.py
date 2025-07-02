@@ -14,7 +14,7 @@ def convert_os_path_to_pathlib(file_path: str) -> bool:
     """os.path를 pathlib.Path로 변환"""
     try:
         # 파일 읽기
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8", newline="") as f:
             content = f.read()
 
         original_content = content
@@ -86,7 +86,7 @@ def find_os_path_files(directory: str = ".") -> List[str]:
 
     for py_file in Path(directory).rglob("*.py"):
         try:
-            with open(py_file, "r", encoding="utf-8") as f:
+            with open(py_file, "r", encoding="utf-8", newline="") as f:
                 content = f.read()
                 if "os.path." in content:
                     os_path_files.append(str(py_file))

@@ -19,7 +19,7 @@ def fix_pyside6_signals():
     for file_path in python_files:
         try:
             # 파일 읽기
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                 content = f.read()
             
             # 변경 전 내용 저장
@@ -30,7 +30,7 @@ def fix_pyside6_signals():
             
             # 변경사항이 있으면 파일에 쓰기
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                     f.write(content)
                 print(f"수정됨: {file_path}")
             

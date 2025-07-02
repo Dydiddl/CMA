@@ -161,7 +161,7 @@ class AsyncASCRProcessor:
                     for page in reader.pages:
                         writer.add_page(page)
                     
-                    with open(section_file, 'wb') as output_file:
+                    with open(section_file, 'wb', encoding=\'utf-8\', newline=\'\') as output_file:
                         writer.write(output_file)
                     
                     split_results.append({
@@ -183,7 +183,7 @@ class AsyncASCRProcessor:
         async def save_json():
             try:
                 output_file = output_dir / "processing_results.json"
-                async with aiofiles.open(output_file, 'w', encoding='utf-8') as f:
+                async with aiofiles.open(output_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                     await f.write(json.dumps(results, ensure_ascii=False, indent=2))
                 logger.info(f"결과 저장 완료: {output_file}")
             except Exception as e:

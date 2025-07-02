@@ -295,7 +295,7 @@ class StandardPriceListProcessor:
             
             # 보고서 저장
             report_file = self.output_dir / f"processing_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                 f.write(report)
             
             logger.info(f"📄 보고서 저장: {report_file}")

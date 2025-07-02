@@ -49,7 +49,7 @@ class ASCRProcessor:
         # 설정 파일이 있으면 로드
         if config_path and Path(config_path).exists():
             try:
-                with open(config_path, 'r', encoding='utf-8') as f:
+                with open(config_path, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                     file_config = json.load(f)
                     default_config.update(file_config)
             except Exception as e:
@@ -142,7 +142,7 @@ class ASCRProcessor:
                 
                 # 결과 저장
                 output_file = self.output_dir / f"toc_structure_{year}.json"
-                with open(output_file, 'w', encoding='utf-8') as f:
+                with open(output_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                     json.dump(toc_structure, f, ensure_ascii=False, indent=2)
                 
                 self.logger.info(f"목차 추출 완료: {output_file}")
@@ -201,7 +201,7 @@ class ASCRProcessor:
                 
                 # 결과 저장
                 output_file = self.output_dir / "extracted_text.txt"
-                with open(output_file, 'w', encoding='utf-8') as f:
+                with open(output_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                     f.write(extracted_text)
                 
                 self.logger.info(f"텍스트 추출 완료: {output_file}")
@@ -255,7 +255,7 @@ class ASCRProcessor:
                     self.logger.warning("목차 정보가 없어 전체 PDF를 하나의 파일로 저장합니다.")
                     # 전체 PDF를 하나의 파일로 저장
                     output_file = self.output_dir / f"complete_document.pdf"
-                    with open(output_file, 'wb') as output:
+                    with open(output_file, 'wb', encoding=\'utf-8\', newline=\'\') as output:
                         writer = PdfWriter()
                         for page in reader.pages:
                             writer.add_page(page)
@@ -287,7 +287,7 @@ class ASCRProcessor:
                                 writer.add_page(reader.pages[page_num])
                         
                         # 파일 저장
-                        with open(output_file, 'wb') as output:
+                        with open(output_file, 'wb', encoding=\'utf-8\', newline=\'\') as output:
                             writer.write(output)
                         
                         split_files.append(str(output_file))

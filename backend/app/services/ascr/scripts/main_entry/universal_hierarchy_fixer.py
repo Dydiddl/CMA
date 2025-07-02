@@ -26,7 +26,7 @@ from src.utils.log import get_logger
 # 로거 초기화
 logger = get_logger("UniversalHierarchyFixer")
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.insert(0, Path(Path(Path(__file__).resolve().parent, '../../')))
 
 @dataclass
 class FixerConfig:

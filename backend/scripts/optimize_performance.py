@@ -326,7 +326,7 @@ def main():
         
         # 결과를 파일로 저장
         output_file = "performance_optimization_results.json"
-        with open(output_file, "w", encoding="utf-8") as f:
+        with open(output_file, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             json.dump(results, f, ensure_ascii=False, indent=2, default=str)
         
         logger.info(f"성능 최적화 결과가 {output_file}에 저장되었습니다.")

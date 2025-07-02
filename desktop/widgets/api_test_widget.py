@@ -12,9 +12,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QThread, Signal, Qt
 import sys
 import os
+from pathlib import Path
 
 # API 클라이언트 임포트
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'api'))
+sys.path.append(Path(Path(__file__).parent, '..', 'api'))
 from api.api_client import APIClient
 
 class APIWorker(QThread):

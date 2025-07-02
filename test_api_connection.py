@@ -7,7 +7,8 @@ API 연동 테스트 스크립트
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'desktop'))
+from pathlib import Path
+sys.path.append(Path(Path(__file__).parent, 'desktop'))
 
 from desktop.api.api_client import APIClient
 import time

@@ -7,10 +7,11 @@ GUI와 백엔드 간의 실시간 통신을 테스트
 
 import sys
 import os
+from pathlib import Path
 import time
 import json
 from datetime import datetime
-sys.path.append(os.path.join(os.path.dirname(__file__), 'desktop'))
+sys.path.append(Path(Path(__file__).parent, 'desktop'))
 
 from desktop.api.api_client import APIClient
 

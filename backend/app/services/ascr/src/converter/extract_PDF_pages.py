@@ -1,8 +1,9 @@
 import os
+from pathlib import Path
 from pypdf import PdfReader, PdfWriter
 
 def extract_pdf_pages(input_path, output_path, start_page, end_page):
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    Path(Path(output_path).parent).mkdir(parents=True, exist_ok=True)
     reader = PdfReader(input_path)
     writer = PdfWriter()
     for i in range(start_page - 1, end_page):
@@ -25,6 +26,6 @@ def extract_pages_interactive():
         idx += 1
 
     for i, (start, end) in enumerate(ranges, 1):
-        output_path = os.path.join(output_dir, f"split_{start}_{end}.pdf")
+        output_path = Path(output_dir, f"split_{start}_{end}.pdf")
         extract_pdf_pages(input_path, output_path, start, end)
         print(f"{start}~{end}페이지 추출 완료: {output_path}")

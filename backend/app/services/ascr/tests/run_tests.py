@@ -130,7 +130,7 @@ def generate_test_report(test_results: dict, validation_results: dict = None):
                 break
     
     # 보고서 저장
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
         json.dump(report_data, f, ensure_ascii=False, indent=2)
     
     print(f"📊 테스트 보고서 생성: {report_file}")

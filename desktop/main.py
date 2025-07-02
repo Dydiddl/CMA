@@ -22,7 +22,7 @@ if platform.system() == "Darwin":  # macOS
     
 elif platform.system() == "Linux":
     # WSL2 환경 감지
-    is_wsl = os.path.exists('/proc/version') and 'microsoft' in open('/proc/version').read().lower()
+    is_wsl = Path('/proc/version').exists() and 'microsoft' in open('/proc/version').read().lower()
     
     if is_wsl:
         # WSL2에서는 X 서버 연결 시도

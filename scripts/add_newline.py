@@ -14,7 +14,7 @@ def add_newline_parameter(file_path: str) -> bool:
     """open() 함수에 newline='' 추가"""
     try:
         # 파일 읽기
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             content = f.read()
 
         original_content = content
@@ -26,29 +26,29 @@ def add_newline_parameter(file_path: str) -> bool:
             # 인코딩이 없는 경우 (읽기 모드)
             (
                 r'open\(([^)]*mode=[^)]*["\']r[^)]*)\)',
-                r"open(\1, encoding=\'utf-8\', newline=\'\')",
+                r"open(\1, encoding=\'utf-8\', newline=\'\', newline=\'\')",
             ),
             (
                 r'open\(([^)]*["\']r[^)]*)\)',
-                r"open(\1, encoding=\'utf-8\', newline=\'\')",
+                r"open(\1, encoding=\'utf-8\', newline=\'\', newline=\'\')",
             ),
             # 인코딩이 없는 경우 (쓰기 모드)
             (
                 r'open\(([^)]*mode=[^)]*["\']w[^)]*)\)',
-                r"open(\1, encoding=\'utf-8\', newline=\'\')",
+                r"open(\1, encoding=\'utf-8\', newline=\'\', newline=\'\')",
             ),
             (
                 r'open\(([^)]*["\']w[^)]*)\)',
-                r"open(\1, encoding=\'utf-8\', newline=\'\')",
+                r"open(\1, encoding=\'utf-8\', newline=\'\', newline=\'\')",
             ),
             # 인코딩이 없는 경우 (추가 모드)
             (
                 r'open\(([^)]*mode=[^)]*["\']a[^)]*)\)',
-                r"open(\1, encoding=\'utf-8\', newline=\'\')",
+                r"open(\1, encoding=\'utf-8\', newline=\'\', newline=\'\')",
             ),
             (
                 r'open\(([^)]*["\']a[^)]*)\)',
-                r"open(\1, encoding=\'utf-8\', newline=\'\')",
+                r"open(\1, encoding=\'utf-8\', newline=\'\', newline=\'\')",
             ),
         ]
 
@@ -58,7 +58,7 @@ def add_newline_parameter(file_path: str) -> bool:
 
         # 변경사항이 있으면 파일에 쓰기
         if content != original_content:
-            with open(file_path, "w", encoding="utf-8", newline="") as f:
+            with open(file_path, "w", encoding="utf-8", newline="", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                 f.write(content)
             print(f"✅ newline 추가 완료: {file_path}")
             return True
@@ -77,10 +77,10 @@ def find_encoding_files(directory: str = ".") -> List[str]:
 
     for py_file in Path(directory).rglob("*.py"):
         try:
-            with open(py_file, "r", encoding="utf-8") as f:
+            with open(py_file, "r", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                 content = f.read()
                 if "open(" in content and "encoding=" in content:
-                    encoding_files.append(str(py_file))
+                    encoding_files.append(str(py_file, newline=\'\'))
         except Exception as e:
             print(f"⚠️ 파일 읽기 실패: {py_file} - {e}")
 
@@ -93,7 +93,7 @@ def find_open_files(directory: str = ".") -> List[str]:
 
     for py_file in Path(directory).rglob("*.py"):
         try:
-            with open(py_file, "r", encoding="utf-8") as f:
+            with open(py_file, "r", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
                 content = f.read()
                 if "open(" in content:
                     open_files.append(str(py_file))

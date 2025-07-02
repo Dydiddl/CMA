@@ -472,7 +472,7 @@ class ASCRWebInterface:
         """
         
         # 템플릿 파일 저장
-        with open(self.template_dir / "index.html", "w", encoding="utf-8") as f:
+        with open(self.template_dir / "index.html", "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
             f.write(main_template)
         
         logger.info("HTML 템플릿 생성 완료")
@@ -513,7 +513,7 @@ async def serve_static_files(file_path: str):
         raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
     
     return StreamingResponse(
-        open(static_file, "rb"),
+        open(static_file, "rb", encoding=\'utf-8\', newline=\'\'),
         media_type="application/octet-stream"
     )
 

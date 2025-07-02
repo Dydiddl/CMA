@@ -28,7 +28,8 @@ class DatabaseManager:
             
             # 연결 테스트
             with self.engine.connect() as conn:
-                conn.execute("SELECT 1")
+                from sqlalchemy import text
+                conn.execute(text("SELECT 1"))
             
             logger.info("[SUCCESS] 데이터베이스 연결 성공")
             return True
