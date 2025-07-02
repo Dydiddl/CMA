@@ -397,7 +397,7 @@ def main():
         
         # 상세 결과를 파일로 저장
         import json
-        with open("labor_performance_test_results.json", "w", encoding="utf-8") as f:
+        with open("labor_performance_test_results.json", "w", encoding="utf-8", newline='', encoding='utf-8', newline='') as f:
             json.dump(results, f, ensure_ascii=False, indent=2, default=str)
         
         logger.info("성능 테스트 결과가 labor_performance_test_results.json에 저장되었습니다.")

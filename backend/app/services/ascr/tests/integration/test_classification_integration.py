@@ -90,7 +90,7 @@ class TestClassificationIntegration:
         }
         
         json_file = temp_dir / "test_toc.json"
-        with open(json_file, 'w', encoding='utf-8') as f:
+        with open(json_file, 'w', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
             json.dump(sample_json, f, ensure_ascii=False, indent=2)
         
         # PDF 분할기 생성 (실제 PDF 없이 테스트)

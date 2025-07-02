@@ -25,7 +25,7 @@ class AdvancedGroundTruthAnalyzer:
     def _load_ground_truth(self) -> Dict[str, Any]:
         """정답 데이터 로드"""
         try:
-            with open(self.ground_truth_path, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+            with open(self.ground_truth_path, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                 content = f.read()
             return self._parse_ground_truth_content(content)
         except Exception as e:
@@ -166,7 +166,7 @@ class AdvancedGroundTruthAnalyzer:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         dataset_path = Path(output_dir) / f"training_dataset_{timestamp}.json"
         
-        with open(dataset_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+        with open(dataset_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
             json.dump(training_data, f, ensure_ascii=False, indent=2)
         
         return str(dataset_path)
@@ -222,7 +222,7 @@ class AdvancedGroundTruthAnalyzer:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         test_cases_path = Path(output_dir) / f"validation_test_cases_{timestamp}.json"
         
-        with open(test_cases_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+        with open(test_cases_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
             json.dump(test_cases, f, ensure_ascii=False, indent=2)
         
         return str(test_cases_path)
@@ -344,7 +344,7 @@ class AdvancedGroundTruthAnalyzer:
 """
         
         # 리포트 저장
-        with open(report_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+        with open(report_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
             f.write(report_content)
         
         return str(report_path)

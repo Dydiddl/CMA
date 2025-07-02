@@ -46,7 +46,7 @@ class ConfigManager:
         """설정 파일 로드"""
         try:
             if self.config_file.exists():
-                with open(self.config_file, 'r', encoding='utf-8') as f:
+                with open(self.config_file, 'r', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
                     file_config = json.load(f)
                     self.config.update(file_config)
                 logger.info("[SUCCESS] 설정 파일 로드 완료")
@@ -59,7 +59,7 @@ class ConfigManager:
     def _save_config(self):
         """설정 파일 저장"""
         try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, 'w', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             logger.info("[SUCCESS] 설정 파일 저장 완료")
         except Exception as e:

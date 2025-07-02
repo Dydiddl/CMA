@@ -205,14 +205,14 @@ if __name__ == "__main__":
         
         # 스크립트 파일 생성
         script_path = temp_dir / "test_reclassify_script.py"
-        with open(script_path, 'w', encoding='utf-8') as f:
+        with open(script_path, 'w', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
             f.write(script_content)
         
         # 파일이 생성되었는지 확인
         assert script_path.exists(), "스크립트 파일이 생성되지 않음"
         
         # 스크립트 내용 검증
-        with open(script_path, 'r', encoding='utf-8') as f:
+        with open(script_path, 'r', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
             content = f.read()
         
         assert "재분류 스크립트" in content, "스크립트 내용이 올바르지 않음"

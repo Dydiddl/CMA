@@ -27,7 +27,7 @@ class TestASCRLogger:
         assert log_file.exists()
         
         # 로그 내용 확인
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, 'r', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
             content = f.read()
             assert "테스트 정보 메시지" in content
     
@@ -41,7 +41,7 @@ class TestASCRLogger:
         assert error_log_file.exists()
         
         # 로그 내용 확인
-        with open(error_log_file, 'r', encoding='utf-8') as f:
+        with open(error_log_file, 'r', encoding='utf-8', newline='', encoding='utf-8', newline='') as f:
             content = f.read()
             assert "테스트 에러 메시지" in content
     
