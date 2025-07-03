@@ -8,8 +8,6 @@ from . import contract
 from . import finance
 from . import labor
 from . import vendor
-from . import excel
-from . import estimator
 from . import ascr
 
 __all__ = [
@@ -17,7 +15,5 @@ __all__ = [
     "finance", 
     "labor",
     "vendor",
-    "excel",
-    "estimator",
     "ascr"
 ]

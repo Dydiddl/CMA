@@ -7,9 +7,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Tuple
-from ..models.vendor import Vendor, VendorDocument
-from ..schemas.vendor import VendorCreate, VendorUpdate, VendorDocumentCreate, VendorResponse, VendorListResponse
-from ..core.exceptions import ValidationException
+from app.models.vendor import Vendor, VendorDocument
+from app.schemas.vendor import VendorCreate, VendorUpdate, VendorDocumentCreate, VendorResponse, VendorListResponse
+from app.core.exceptions import ValidationException
 
 
 class VendorService:
@@ -21,7 +21,7 @@ class VendorService:
     def create_vendor(self, vendor: VendorCreate) -> VendorResponse:
         """새로운 거래처를 등록합니다."""
         try:
-            db_vendor = Vendor(**vendor.dict())
+            db_vendor = Vendor(**vendor.model_dump())
             self.db.add(db_vendor)
             self.db.commit()
             self.db.refresh(db_vendor)
@@ -137,7 +137,7 @@ class VendorService:
             if not db_vendor:
                 return None
             
-            for key, value in vendor.dict(exclude_unset=True).items():
+            for key, value in vendor.model_dump(exclude_unset=True).items():
                 setattr(db_vendor, key, value)
             
             self.db.commit()
@@ -190,7 +190,7 @@ class VendorService:
     ) -> VendorDocument:
         """거래처 문서를 생성합니다."""
         try:
-            db_document = VendorDocument(**document.dict(), vendor_id=vendor_id)
+            db_document = VendorDocument(**document.model_dump(), vendor_id=vendor_id)
             self.db.add(db_document)
             self.db.commit()
             self.db.refresh(db_document)

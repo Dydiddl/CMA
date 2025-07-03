@@ -128,13 +128,13 @@ class DeploymentPreparer:
             }
             
             env_file = self.deployment_dir / ".env"
-            with open(env_file, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+            with open(env_file, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                 for key, value in env_config.items():
                     f.write(f"{key}={value}\n")
             
             # 배포 스크립트
             deployment_script = self.deployment_dir / "deploy.sh"
-            with open(deployment_script, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+            with open(deployment_script, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                 f.write("""#!/bin/bash
 # CMA 배포 스크립트
 
@@ -241,7 +241,7 @@ echo "CMA 배포 완료"
             # 설정 파일 유효성 확인
             env_file = self.deployment_dir / ".env"
             if env_file.exists():
-                with open(env_file, "r", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+                with open(env_file, "r", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                     env_content = f.read()
                     if "DATABASE_URL" in env_content and "REDIS_URL" in env_content:
                         validation_results["config_validation"].append(".env: 필수 설정 포함")
@@ -291,7 +291,7 @@ echo "CMA 배포 완료"
             
             # 보고서 파일 저장
             report_file = self.deployment_dir / "deployment_report.json"
-            with open(report_file, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+            with open(report_file, "w", encoding="utf-8", newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                 json.dump(report, f, ensure_ascii=False, indent=2, default=str)
             
             return {

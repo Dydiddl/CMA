@@ -57,6 +57,12 @@ sys.path.insert(0, str(project_root))
 from desktop.ui.main_window import MainWindow
 from desktop.core.database import DatabaseManager
 from desktop.core.config import ConfigManager
+from desktop.core.exceptions import (
+    DatabaseConnectionError, 
+    ConfigurationError, 
+    GUIError,
+    NetworkError
+)
 from desktop.utils.logger import setup_logger
 
 class CMAApplication(QApplication):
@@ -77,13 +83,22 @@ class CMAApplication(QApplication):
         self.logger = setup_logger()
         
         # 설정 관리자 초기화
-        self.config = ConfigManager()
+        try:
+            self.config = ConfigManager()
+        except Exception as e:
+            raise ConfigurationError(f"설정 파일 로드 실패: {e}")
         
         # 데이터베이스 관리자 초기화
-        self.db_manager = DatabaseManager()
+        try:
+            self.db_manager = DatabaseManager()
+        except Exception as e:
+            raise DatabaseConnectionError(f"데이터베이스 초기화 실패: {e}")
         
         # 메인 윈도우 생성
-        self.main_window = MainWindow()
+        try:
+            self.main_window = MainWindow()
+        except Exception as e:
+            raise GUIError(f"메인 윈도우 생성 실패: {e}")
     
     def setup_korean_font(self):
         """한글 폰트 설정"""
@@ -133,13 +148,20 @@ class CMAApplication(QApplication):
             self.logger.info("[INFO] CMA 데스크톱 애플리케이션 초기화 시작")
             
             # 데이터베이스 연결
-            self.db_manager.connect()
+            if not self.db_manager.connect():
+                raise DatabaseConnectionError("데이터베이스 연결에 실패했습니다")
             
             # 메인 윈도우 표시
             self.main_window.show()
             
             self.logger.info("[SUCCESS] CMA 데스크톱 애플리케이션 초기화 완료")
             
+        except DatabaseConnectionError as e:
+            self.logger.error(f"[ERROR] 데이터베이스 연결 실패: {e}")
+            raise
+        except GUIError as e:
+            self.logger.error(f"[ERROR] GUI 초기화 실패: {e}")
+            raise
         except Exception as e:
             self.logger.error(f"[ERROR] 애플리케이션 초기화 실패: {e}")
             raise
@@ -175,6 +197,18 @@ def main():
             app.cleanup()
             sys.exit(exit_code)
         
+    except DatabaseConnectionError as e:
+        print(f"[ERROR] 데이터베이스 오류: {e}")
+        sys.exit(1)
+    except ConfigurationError as e:
+        print(f"[ERROR] 설정 오류: {e}")
+        sys.exit(1)
+    except GUIError as e:
+        print(f"[ERROR] GUI 오류: {e}")
+        sys.exit(1)
+    except NetworkError as e:
+        print(f"[ERROR] 네트워크 오류: {e}")
+        sys.exit(1)
     except Exception as e:
         print(f"[ERROR] 애플리케이션 실행 실패: {e}")
         sys.exit(1)
@@ -185,13 +219,20 @@ def run_console_mode():
         print("[INFO] CMA 콘솔 모드 시작")
         
         # 설정 관리자 초기화
-        config = ConfigManager()
-        print(f"[INFO] 설정 로드 완료: {config.config_file}")
+        try:
+            config = ConfigManager()
+            print(f"[INFO] 설정 로드 완료: {config.config_file}")
+        except Exception as e:
+            raise ConfigurationError(f"설정 로드 실패: {e}")
         
         # 데이터베이스 관리자 초기화
-        db_manager = DatabaseManager()
-        db_manager.connect()
-        print("[SUCCESS] 데이터베이스 연결 완료")
+        try:
+            db_manager = DatabaseManager()
+            if not db_manager.connect():
+                raise DatabaseConnectionError("데이터베이스 연결 실패")
+            print("[SUCCESS] 데이터베이스 연결 완료")
+        except Exception as e:
+            raise DatabaseConnectionError(f"데이터베이스 연결 실패: {e}")
         
         # 로거 설정
         logger = setup_logger()
@@ -209,6 +250,12 @@ def run_console_mode():
         except KeyboardInterrupt:
             print("\n[INFO] 사용자에 의해 종료되었습니다.")
         
+    except ConfigurationError as e:
+        print(f"[ERROR] 설정 오류: {e}")
+        raise
+    except DatabaseConnectionError as e:
+        print(f"[ERROR] 데이터베이스 오류: {e}")
+        raise
     except Exception as e:
         print(f"[ERROR] 콘솔 모드 실행 실패: {e}")
         raise

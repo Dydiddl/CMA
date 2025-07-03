@@ -292,7 +292,7 @@ class AdvancedLogger:
         """성능 보고서 저장"""
         report = self.get_performance_report()
         
-        with open(output_path, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
         
         self.log_with_context(

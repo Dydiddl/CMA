@@ -41,19 +41,14 @@ class TestLaborService:
     def sample_labor_data(self):
         """샘플 노무자 데이터"""
         return {
-            "worker_name": "홍길동",
-            "ssn": "900101-1234567",
-            "birth_date": "1990-01-01",
-            "gender": "남성",
-            "job_type": "기술자",
-            "hire_date": "2024-01-01",
-            "hourly_wage": 20000,
-            "work_hours": 8,
+            "name": "홍길동",
+            "phone": "010-1234-5678",
+            "id_number": "900101-1234567",
+            "bank_name": "신한은행",
+            "bank_account": "110-123-456789",
+            "daily_wage": 20000,
             "status": "재직",
-            "contact": "010-1234-5678",
-            "address": "서울시 강남구",
-            "emergency_contact": "010-9876-5432",
-            "memo": "테스트 노무자"
+            "contract_id": "contract-1"
         }
     
     def test_create_labor_success(self, labor_service, mock_db, sample_labor_data):
@@ -61,7 +56,7 @@ class TestLaborService:
         # Given
         labor_create = LaborCreate(**sample_labor_data)
         mock_labor = Mock(spec=Labor)
-        mock_labor.worker_name = sample_labor_data["worker_name"]
+        mock_labor.name = sample_labor_data["name"]
         
         # 중복 검사 결과 (중복 없음)
         labor_service.db.query.return_value.filter.return_value.first.return_value = None
@@ -98,7 +93,7 @@ class TestLaborService:
         # Given
         mock_labor = Mock(spec=Labor)
         mock_labor.id = "test-id"
-        mock_labor.worker_name = "홍길동"
+        mock_labor.name = "홍길동"
         
         labor_service.db.query.return_value.filter.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_labor]
         labor_service.db.query.return_value.filter.return_value.count.return_value = 1
@@ -132,7 +127,7 @@ class TestLaborService:
         labor_id = "test-id"
         mock_labor = Mock(spec=Labor)
         mock_labor.id = labor_id
-        mock_labor.worker_name = "홍길동"
+        mock_labor.name = "홍길동"
         
         labor_service.db.query.return_value.filter.return_value.first.return_value = mock_labor
         
@@ -176,12 +171,12 @@ class TestLaborService:
         labor_id = "test-id"
         mock_labor = Mock(spec=Labor)
         mock_labor.id = labor_id
-        mock_labor.worker_name = "홍길동"
+        mock_labor.name = "홍길동"
         
         labor_service.db.query.return_value.filter.return_value.first.return_value = mock_labor
         labor_service.db.query.return_value.filter.return_value.first.return_value = None  # 중복 검사
         
-        labor_update = LaborUpdate(worker_name="김철수")
+        labor_update = LaborUpdate(name="김철수")
         
         # When
         result = labor_service.update_labor(labor_id, labor_update)
@@ -196,7 +191,7 @@ class TestLaborService:
         labor_id = "non-existent-id"
         labor_service.db.query.return_value.filter.return_value.first.return_value = None
         
-        labor_update = LaborUpdate(worker_name="김철수")
+        labor_update = LaborUpdate(name="김철수")
         
         # When
         result = labor_service.update_labor(labor_id, labor_update)
@@ -210,7 +205,7 @@ class TestLaborService:
         labor_id = "test-id"
         mock_labor = Mock(spec=Labor)
         mock_labor.id = labor_id
-        mock_labor.worker_name = "홍길동"
+        mock_labor.name = "홍길동"
         
         labor_service.db.query.return_value.filter.return_value.first.return_value = mock_labor
         labor_service.db.query.return_value.filter.return_value.count.return_value = 0
@@ -333,7 +328,7 @@ class TestLaborService:
     def test_optimize_database_queries_success(self, labor_service, mock_db):
         """데이터베이스 쿼리 최적화 성공 테스트"""
         # Given
-        mock_index_stats = [{"indexname": "ix_labor_worker_name", "idx_scan": 100}]
+        mock_index_stats = [{"indexname": "ix_labor_name", "idx_scan": 100}]
         mock_slow_queries = [{"query": "SELECT * FROM labor", "mean_time": 10.5}]
         
         labor_service.db.execute.return_value.fetchall.side_effect = [mock_index_stats, mock_slow_queries]
@@ -367,19 +362,14 @@ class TestLaborServiceIntegration:
         """노무자 생성 및 조회 통합 테스트"""
         # Given
         labor_data = LaborCreate(
-            worker_name="통합테스트노무자",
-            ssn="900101-1234567",
-            birth_date="1990-01-01",
-            gender="남성",
-            job_type="기술자",
-            hire_date="2024-01-01",
-            hourly_wage=20000,
-            work_hours=8,
+            name="통합테스트노무자",
+            phone="010-1234-5678",
+            id_number="900101-1234567",
+            bank_name="신한은행",
+            bank_account="110-123-456789",
+            daily_wage=20000,
             status="재직",
-            contact="010-1234-5678",
-            address="서울시 강남구",
-            emergency_contact="010-9876-5432",
-            memo="통합 테스트용 노무자"
+            contract_id="contract-1"
         )
         
         # When - 노무자 생성
@@ -387,14 +377,14 @@ class TestLaborServiceIntegration:
         
         # Then
         assert created_labor is not None
-        assert created_labor.worker_name == "통합테스트노무자"
+        assert created_labor.name == "통합테스트노무자"
         
         # When - 노무자 조회
         retrieved_labor = labor_service.get_labor_by_id(created_labor.id)
         
         # Then
         assert retrieved_labor is not None
-        assert retrieved_labor.worker_name == "통합테스트노무자"
+        assert retrieved_labor.name == "통합테스트노무자"
         assert retrieved_labor.job_type == "기술자"
         
         # Cleanup
@@ -405,19 +395,14 @@ class TestLaborServiceIntegration:
         # Given - 여러 노무자 생성
         labor_data_list = [
             LaborCreate(
-                worker_name=f"페이징테스트{i}",
-                ssn=f"900101-{i:06d}",
-                birth_date="1990-01-01",
-                gender="남성",
-                job_type="기술자",
-                hire_date="2024-01-01",
-                hourly_wage=20000,
-                work_hours=8,
+                name=f"페이징테스트{i}",
+                phone=f"010-1234-{i:04d}",
+                id_number=f"900101-{i:06d}",
+                bank_name="신한은행",
+                bank_account="110-123-456789",
+                daily_wage=20000,
                 status="재직",
-                contact=f"010-1234-{i:04d}",
-                address="서울시 강남구",
-                emergency_contact="010-9876-5432",
-                memo=f"페이징 테스트용 노무자 {i}"
+                contract_id=f"contract-{i}"
             )
             for i in range(1, 6)
         ]
@@ -446,19 +431,14 @@ class TestLaborServiceIntegration:
         """노무자 검색 기능 테스트"""
         # Given - 검색용 노무자 생성
         search_labor_data = LaborCreate(
-            worker_name="검색테스트노무자",
-            ssn="900101-1234567",
-            birth_date="1990-01-01",
-            gender="남성",
-            job_type="기술자",
-            hire_date="2024-01-01",
-            hourly_wage=20000,
-            work_hours=8,
+            name="검색테스트노무자",
+            phone="010-1234-5678",
+            id_number="900101-1234567",
+            bank_name="신한은행",
+            bank_account="110-123-456789",
+            daily_wage=20000,
             status="재직",
-            contact="010-1234-5678",
-            address="서울시 강남구",
-            emergency_contact="010-9876-5432",
-            memo="검색 테스트용 노무자"
+            contract_id="contract-1"
         )
         
         created_labor = labor_service.create_labor(search_labor_data)
@@ -469,14 +449,14 @@ class TestLaborServiceIntegration:
             
             # Then
             assert total_by_name >= 1
-            assert any("검색테스트" in labor.worker_name for labor in result_by_name)
+            assert any("검색테스트" in labor.name for labor in result_by_name)
             
             # When - 연락처로 검색
-            result_by_contact, total_by_contact = labor_service.get_labor_records(search="1234")
+            result_by_phone, total_by_phone = labor_service.get_labor_records(search="1234")
             
             # Then
-            assert total_by_contact >= 1
-            assert any("1234" in labor.contact for labor in result_by_contact)
+            assert total_by_phone >= 1
+            assert any("1234" in labor.phone for labor in result_by_phone)
             
         finally:
             # Cleanup

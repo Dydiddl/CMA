@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from ..models.contract import Contract, ContractDocument
-from ..schemas.contract import ContractCreate, ContractUpdate, ContractDocumentCreate
+from app.models.contract import Contract, ContractDocument
+from app.schemas.contract import ContractCreate, ContractUpdate, ContractDocumentCreate
 
 class ContractService:
     """계약 서비스 클래스"""

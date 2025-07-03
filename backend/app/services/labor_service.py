@@ -139,7 +139,7 @@ class LaborService:
             if not labor:
                 return None
             
-            result = LaborResponse.from_orm(labor)
+            result = LaborResponse.model_validate(labor)
             
             # 캐시 저장
             self.cache.set(cache_key, result, 600)  # 10분 캐시
@@ -158,15 +158,15 @@ class LaborService:
                 return None
             
             # 업데이트할 데이터만 추출
-            update_data = labor_update.dict(exclude_unset=True)
+            update_data = labor_update.model_dump(exclude_unset=True)
             
             # 중복 검사 (이름이나 연락처 변경 시)
-            if 'worker_name' in update_data or 'contact' in update_data:
+            if 'name' in update_data or 'phone' in update_data:
                 existing_labor = self.db.query(Labor).filter(
                     and_(
                         or_(
-                            Labor.worker_name == update_data.get('worker_name', labor.worker_name),
-                            Labor.contact == update_data.get('contact', labor.contact)
+                            Labor.name == update_data.get('name', labor.name),
+                            Labor.phone == update_data.get('phone', labor.phone)
                         ),
                         Labor.id != labor_id
                     )
@@ -185,8 +185,8 @@ class LaborService:
             # 캐시 무효화
             self._invalidate_labor_cache(labor_id)
             
-            logger.info(f"노무자 수정 완료: {labor.worker_name}")
-            return LaborResponse.from_orm(labor)
+            logger.info(f"노무자 수정 완료: {labor.name}")
+            return LaborResponse.model_validate(labor)
             
         except Exception as e:
             self.db.rollback()
@@ -202,7 +202,7 @@ class LaborService:
             
             # 관련 기록 확인
             related_records = self.db.query(WorkLog).filter(
-                WorkLog.worker_id == labor_id
+                WorkLog.labor_id == labor_id
             ).count()
             
             if related_records > 0:
@@ -214,7 +214,7 @@ class LaborService:
             # 캐시 무효화
             self._invalidate_labor_cache(labor_id)
             
-            logger.info(f"노무자 삭제 완료: {labor.worker_name}")
+            logger.info(f"노무자 삭제 완료: {labor.name}")
             return True
             
         except Exception as e:
@@ -247,14 +247,14 @@ class LaborService:
             ).scalar()
             
             # 평균 시급
-            avg_wage_result = self.db.query(func.avg(Labor.hourly_wage)).scalar()
+            avg_wage_result = self.db.query(func.avg(Labor.daily_wage)).scalar()
             average_wage = float(avg_wage_result) if avg_wage_result else 0.0
             
             # 이번 달 근무 기록 통계
             monthly_records = self.db.query(
-                func.sum(WorkLog.hours_worked).label('total_hours'),
-                func.sum(WorkLog.hours_worked * Labor.hourly_wage).label('total_cost')
-            ).join(Labor, WorkLog.worker_id == Labor.id).filter(
+                func.sum(WorkLog.work_hours).label('total_hours'),
+                func.sum(WorkLog.work_hours * Labor.daily_wage).label('total_cost')
+            ).join(Labor, WorkLog.labor_id == Labor.id).filter(
                 WorkLog.work_date >= current_month_start
             ).first()
             
@@ -262,13 +262,13 @@ class LaborService:
             monthly_cost = float(monthly_records.total_cost) if monthly_records.total_cost else 0.0
             
             # 이번 주 근무 시간
-            weekly_hours = self.db.query(func.sum(WorkLog.hours_worked)).filter(
+            weekly_hours = self.db.query(func.sum(WorkLog.work_hours)).filter(
                 WorkLog.work_date >= week_start
             ).scalar()
             weekly_hours = float(weekly_hours) if weekly_hours else 0.0
             
             # 총 근무 시간 (전체)
-            total_hours = self.db.query(func.sum(WorkLog.hours_worked)).scalar()
+            total_hours = self.db.query(func.sum(WorkLog.work_hours)).scalar()
             total_hours = float(total_hours) if total_hours else 0.0
             
             # 가동률 계산
@@ -312,6 +312,12 @@ class LaborService:
             labor_records = []
             
             for record_data in records:
+                # 필드명 변환
+                if 'worker_id' in record_data:
+                    record_data['labor_id'] = record_data.pop('worker_id')
+                if 'hours_worked' in record_data:
+                    record_data['work_hours'] = record_data.pop('hours_worked')
+                
                 labor_record = WorkLog(**record_data)
                 labor_records.append(labor_record)
             
@@ -319,10 +325,7 @@ class LaborService:
             self.db.bulk_save_objects(labor_records)
             self.db.commit()
             
-            # 캐시 무효화
-            self._invalidate_labor_cache()
-            
-            logger.info(f"노무 기록 배치 생성 완료: {len(records)}개")
+            logger.info(f"노무 기록 배치 생성 완료: {len(labor_records)}개")
             return labor_records
             
         except Exception as e:
@@ -341,10 +344,10 @@ class LaborService:
             # 기간별 근무 기록 통계
             period_stats = self.db.query(
                 func.count(WorkLog.id).label('total_records'),
-                func.sum(WorkLog.hours_worked).label('total_hours'),
-                func.sum(WorkLog.hours_worked * Labor.hourly_wage).label('total_cost'),
-                func.avg(WorkLog.hours_worked).label('avg_hours_per_day')
-            ).join(Labor, WorkLog.worker_id == Labor.id).filter(
+                func.sum(WorkLog.work_hours).label('total_hours'),
+                func.sum(WorkLog.work_hours * Labor.daily_wage).label('total_cost'),
+                func.avg(WorkLog.work_hours).label('avg_hours_per_day')
+            ).join(Labor, WorkLog.labor_id == Labor.id).filter(
                 and_(
                     WorkLog.work_date >= start_date,
                     WorkLog.work_date <= end_date
@@ -353,34 +356,39 @@ class LaborService:
             
             # 직종별 통계
             job_type_stats = self.db.query(
-                Labor.job_type,
+                Labor.status.label('job_type'),
                 func.count(WorkLog.id).label('record_count'),
-                func.sum(WorkLog.hours_worked).label('total_hours'),
-                func.sum(WorkLog.hours_worked * Labor.hourly_wage).label('total_cost')
-            ).join(WorkLog, Labor.id == WorkLog.worker_id).filter(
+                func.sum(WorkLog.work_hours).label('total_hours'),
+                func.sum(WorkLog.work_hours * Labor.daily_wage).label('total_cost')
+            ).join(WorkLog, Labor.id == WorkLog.labor_id).filter(
                 and_(
                     WorkLog.work_date >= start_date,
                     WorkLog.work_date <= end_date
                 )
-            ).group_by(Labor.job_type).all()
+            ).group_by(Labor.status).all()
             
-            return {
-                "period_stats": {
+            # 결과 구성
+            result = {
+                "period": {
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
                     "total_records": period_stats.total_records or 0,
-                    "total_hours": float(period_stats.total_hours) if period_stats.total_hours else 0.0,
-                    "total_cost": float(period_stats.total_cost) if period_stats.total_cost else 0.0,
-                    "avg_hours_per_day": float(period_stats.avg_hours_per_day) if period_stats.avg_hours_per_day else 0.0
+                    "total_hours": float(period_stats.total_hours or 0),
+                    "total_cost": float(period_stats.total_cost or 0),
+                    "avg_hours_per_day": float(period_stats.avg_hours_per_day or 0)
                 },
-                "job_type_stats": [
+                "by_job_type": [
                     {
                         "job_type": stat.job_type,
                         "record_count": stat.record_count,
-                        "total_hours": float(stat.total_hours) if stat.total_hours else 0.0,
-                        "total_cost": float(stat.total_cost) if stat.total_cost else 0.0
+                        "total_hours": float(stat.total_hours or 0),
+                        "total_cost": float(stat.total_cost or 0)
                     }
                     for stat in job_type_stats
                 ]
             }
+            
+            return result
             
         except Exception as e:
             logger.error(f"기간별 노무 통계 계산 실패: {e}")

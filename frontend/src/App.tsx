@@ -17,7 +17,7 @@ const ProjectList = React.lazy(() => import('./pages/ProjectList'));
 const ProjectDetail = React.lazy(() => import('./pages/ProjectDetail'));
 const TaskList = React.lazy(() => import('./pages/TaskList'));
 const TaskDetail = React.lazy(() => import('./pages/TaskDetail'));
-const ASCR = React.lazy(() => import('./pages/ASCR'));
+const ASCR = React.lazy(() => import('./pages/ASCRPage').then(module => ({ default: module.ASCRPage })));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));

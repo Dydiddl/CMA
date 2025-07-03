@@ -37,7 +37,7 @@ class SemiAutomatedGroundTruthGenerator:
             return {}
         
         try:
-            with open(gt_2025_file, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+            with open(gt_2025_file, 'r', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                 content = f.read()
             
             # 2025년 정답 데이터 파싱
@@ -172,7 +172,7 @@ class SemiAutomatedGroundTruthGenerator:
         # 방법 2: PyPDF2 사용
         try:
             import PyPDF2
-            with open(pdf_path, 'rb', encoding=\'utf-8\', newline=\'\') as file:
+            with open(pdf_path, 'rb', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as file:
                 reader = PyPDF2.PdfReader(file)
                 text = ""
                 for page in reader.pages:
@@ -425,7 +425,7 @@ class SemiAutomatedGroundTruthGenerator:
                 content += "\n"
         
         # 파일 저장
-        with open(output_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+        with open(output_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
             f.write(content)
         
         print(f"✅ 반자동화 정답 데이터 저장: {output_file}")
@@ -445,7 +445,7 @@ class SemiAutomatedGroundTruthGenerator:
                 
                 # 검증 리포트 저장
                 report_file = self.ground_truth_dir / f"validation_report_{year}.md"
-                with open(report_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+                with open(report_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
                     f.write(result['validation_report'])
                 print(f"  - 검증 리포트 저장: {report_file}")
         
@@ -496,7 +496,7 @@ class SemiAutomatedGroundTruthGenerator:
         
         # 종합 리포트 저장
         report_file = self.ground_truth_dir / "comprehensive_generation_report.md"
-        with open(report_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\') as f:
+        with open(report_file, 'w', encoding='utf-8', newline=\'\', encoding=\'utf-8\', newline=\'\', newline='', encoding='utf-8', newline='') as f:
             f.write(report)
         
         print(f"✅ 종합 리포트 저장: {report_file}")

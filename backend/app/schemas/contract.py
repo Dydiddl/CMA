@@ -1,7 +1,7 @@
 """
 계약 관련 Pydantic 스키마
 """
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 
@@ -20,11 +20,12 @@ class ContractBase(BaseModel):
     description: Optional[str] = Field(None, description="계약 설명")
     vendor_id: str = Field(..., description="거래처 ID")
     
-    @validator('end_date')
-    def validate_end_date(cls, v, values):
+    @field_validator('end_date')
+    @classmethod
+    def validate_end_date(cls, v, info):
         """종료일 검증"""
-        if v and 'start_date' in values and values['start_date']:
-            if v <= values['start_date']:
+        if v and 'start_date' in info.data and info.data['start_date']:
+            if v <= info.data['start_date']:
                 raise ValueError('종료일은 시작일보다 늦어야 합니다.')
         return v
 
@@ -55,8 +56,7 @@ class ContractResponse(ContractBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class ContractDocumentBase(BaseModel):

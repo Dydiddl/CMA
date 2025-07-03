@@ -1,171 +1,68 @@
-# CMA Backend
+# CMA Backend (ASCR 모듈 포함)
 
-*최종 업데이트: 2025-01-23*
+*최종 업데이트: 2025-07-03*
 
-CMA (Construction Management System) 백엔드 서버입니다.
+이 저장소는 **CMA(Construction Management System)** 전체 시스템의 일부로, 건설공사 내역서 자동화(ASCR) 모듈을 포함한 백엔드 서버입니다.
 
-## 🏗️ 아키텍처
+## 🏗️ 시스템 개요
+- **CMA**는 계약, 노무, 재무, 문서(PDF/엑셀) 등 건설관리 업무를 자동화하는 하이브리드 시스템입니다.
+- 본 백엔드는 FastAPI 기반 REST API와 **ASCR(Automated Standard Construction Report)** 모듈을 제공합니다.
+- ASCR는 표준품셈/노임단가/제비율 PDF → 데이터화 → 엑셀 자동화, 연도별 데이터 관리, 반자동 입력, 템플릿 유지 등 최신 명세를 반영합니다.
 
-### 기술 스택
-- **Python**: 3.12+
-- **FastAPI**: 0.115.12 (비동기 웹 프레임워크)
-- **SQLAlchemy**: 2.0.41 (ORM)
-- **Alembic**: 1.16.1 (데이터베이스 마이그레이션)
-- **Pydantic**: 2.11.7 (데이터 검증)
-- **Uvicorn**: 0.34.3 (ASGI 서버)
-- **PostgreSQL**: 14+ (데이터베이스)
+## 🧩 주요 모듈 및 기능
+- **ASCR**: PDF(표준품셈, 노임단가, 제비율 등) → 텍스트/구조화 데이터 추출 → 엑셀 내역서 자동 생성
+  - 연도별 데이터 버전 관리(예: 표준품셈_2025)
+  - 엑셀 템플릿 구조 유지, 수동 입력 보완(자재단가 등)
+  - 원가계산서, 수량산출 자동화, 향후 ML 기반 고도화 확장 예정
+- **계약/노무/재무 관리**: CRUD, 상태 추적, 보고서 등
+- **공통**: 인증(JWT), 성능 모니터링, 캐싱, 헬스체크 등
 
-### 프로젝트 구조
+## 📁 프로젝트 구조
 ```
 backend/
 ├── app/
-│   ├── api/                    # API 라우터
-│   │   ├── v1/                # API v1
-│   │   │   ├── api.py         # 메인 API 라우터
-│   │   │   └── endpoints/     # 엔드포인트
-│   │   │       ├── projects.py
-│   │   │       └── tasks.py
-│   │   └── common/            # 공통 API 기능
-│   ├── core/                  # 핵심 설정
-│   │   ├── config.py          # 애플리케이션 설정
-│   │   ├── auth.py            # 인증
-│   │   └── database.py        # 데이터베이스 연결
-│   ├── models/                # SQLAlchemy 모델
-│   │   ├── base.py            # 기본 모델
-│   │   └── models.py          # 모든 모델
-│   ├── schemas/               # Pydantic 스키마
-│   │   └── schemas.py         # 모든 스키마
-│   ├── services/              # 비즈니스 로직
-│   │   └── ascr/              # ASCR 모듈
-│   ├── crud.py                # CRUD 작업
-│   └── main.py                # 애플리케이션 진입점
-├── alembic/                   # 데이터베이스 마이그레이션
-├── tests/                     # 테스트
-├── requirements.txt           # 의존성
-└── README.md                  # 이 파일
+│   ├── api/                    # API 라우터 (v1/에 ASCR 등 포함)
+│   ├── core/                   # 설정, 인증, DB
+│   ├── models/                 # SQLAlchemy 모델
+│   ├── schemas/                # Pydantic 스키마
+│   ├── services/               # 비즈니스 로직 (ascr/ 등)
+│   └── main.py                 # FastAPI 진입점
+├── requirements.txt            # 의존성
+└── ...
 ```
 
 ## 🚀 시작하기
-
 ### 1. 환경 설정
 ```bash
-# 가상환경 생성
 python -m venv venv
-
-# 가상환경 활성화
-# Windows
-venv\Scripts\activate
-# macOS/Linux
 source venv/bin/activate
-
-# 의존성 설치
 pip install -r requirements.txt
 ```
-
 ### 2. 데이터베이스 설정
 ```bash
-# 환경 변수 설정
 cp .env.example .env
-# .env 파일을 편집하여 데이터베이스 설정
-
-# 데이터베이스 마이그레이션
+# .env 편집 후
 alembic upgrade head
 ```
-
 ### 3. 서버 실행
 ```bash
-# 개발 서버 실행
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# 또는
-python app/main.py
 ```
 
 ## 📚 API 문서
+- Swagger: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
-서버 실행 후 다음 URL에서 API 문서를 확인할 수 있습니다:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+## 🏗️ ASCR 모듈 명세 요약
+- 반복적 문서작성 자동화, 최신 공공 데이터 반영
+- PDF→데이터→엑셀 자동화, 연도별 데이터 관리, 반자동(수동입력 보완) 구조
+- 엑셀 템플릿 유지, 수량산출/원가계산서 자동화, 향후 ML 고도화 예정
+- 자세한 명세: `docs/`, `app/services/ascr/` 참고
 
-## 🔧 개발
+## 🔧 개발 및 테스트
+- PEP8, Black, isort, flake8 준수
+- 테스트: pytest, `pytest --cov=app`
+- 마이그레이션: alembic
 
-### 코드 스타일
-- **PEP8** 준수
-- **Black** 포맷터 사용
-- **isort** 임포트 정렬
-- **flake8** 린터 사용
-
-### 테스트 실행
-```bash
-# 모든 테스트 실행
-pytest
-
-# 특정 테스트 실행
-pytest tests/test_api.py
-
-# 커버리지와 함께 실행
-pytest --cov=app
-```
-
-### 데이터베이스 마이그레이션
-```bash
-# 새 마이그레이션 생성
-alembic revision --autogenerate -m "설명"
-
-# 마이그레이션 적용
-alembic upgrade head
-
-# 마이그레이션 되돌리기
-alembic downgrade -1
-```
-
-## 🏗️ 주요 기능
-
-### 1. 프로젝트 관리
-- 프로젝트 생성, 조회, 수정, 삭제
-- 프로젝트별 작업 관리
-- 프로젝트 상태 추적
-
-### 2. 작업 관리
-- 작업 생성 및 할당
-- 작업 진행 상황 추적
-- 작업 완료율 계산
-
-### 3. ASCR 모듈
-- PDF 문서 처리
-- 목차 자동 추출
-- 문서 구조 분석
-
-## 🔒 보안
-
-- JWT 기반 인증
-- CORS 설정
-- 입력 데이터 검증
-- SQL 인젝션 방지
-
-## 📊 성능 최적화
-
-- 비동기 처리
-- 데이터베이스 연결 풀링
-- 캐싱 전략
-- 쿼리 최적화
-
-## 🐛 문제 해결
-
-### 일반적인 문제
-1. **데이터베이스 연결 실패**: `.env` 파일의 데이터베이스 설정 확인
-2. **포트 충돌**: 다른 프로세스가 8000번 포트를 사용 중인지 확인
-3. **의존성 오류**: `pip install -r requirements.txt` 재실행
-
-### 로그 확인
-```bash
-# 애플리케이션 로그
-tail -f logs/cma.log
-
-# 서버 로그
-uvicorn app.main:app --log-level debug
-```
-
-## 📝 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 
+## �� 라이선스
+MIT License 

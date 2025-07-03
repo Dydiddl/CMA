@@ -1,180 +1,253 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
 
-const API_URL = 'http://localhost:8000/api/v1';
-
-export interface TOCStructure {
-  chapters: Array<{
-    title: string;
-    page: number;
-    children?: Array<{
-      title: string;
-      page: number;
-    }>;
-  }>;
+export interface ASCRProcessingOptions {
+  processingType: 'standard' | 'optimized' | 'ml_enhanced';
+  year?: number;
+  options?: Record<string, any>;
 }
 
-export interface PDFExtractionResult {
-  text: string;
-  pages: number;
-  structure?: TOCStructure;
+export interface ASCRProcessingResponse {
+  status: 'success' | 'error';
+  message: string;
+  data: any;
 }
 
-export interface StandardPriceResult {
-  year: number;
-  status: string;
-  file_path?: string;
+export interface ASCRTaskStatus {
+  task_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  progress: number;
+  result?: any;
+  error?: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ValidationResult {
-  is_valid: boolean;
-  errors: string[];
-  warnings: string[];
-}
+export class ASCRService {
+  private static readonly BASE_URL = '/api/v1/ascr';
 
-const ascrService = {
-  // PDF 목차 추출
-  extractTOC: async (file: File, year?: number): Promise<TOCStructure> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      if (year) {
-        formData.append('year', year.toString());
+  /**
+   * PDF 파일 업로드 및 처리
+   */
+  static async uploadAndProcess(
+    formData: FormData, 
+    options: ASCRProcessingOptions
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/process`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        params: {
+          processing_type: options.processingType,
+          year: options.year,
+          ...options.options
+        }
       }
+    );
+    return response.data;
+  }
 
-      const response = await axios.post(`${API_URL}/ascr/extract-toc`, formData, {
+  /**
+   * 목차 추출
+   */
+  static async extractTOC(
+    formData: FormData, 
+    year: number
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/extract-toc`,
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      });
-
-      return response.data.data;
-    } catch (error) {
-      console.error('목차 추출 실패:', error);
-      throw error;
-    }
-  },
-
-  // PDF 텍스트 추출
-  extractText: async (file: File, pages?: number[]): Promise<PDFExtractionResult> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      if (pages) {
-        formData.append('pages', JSON.stringify(pages));
+        params: { year }
       }
+    );
+    return response.data;
+  }
 
-      const response = await axios.post(`${API_URL}/ascr/extract-text`, formData, {
+  /**
+   * 텍스트 추출
+   */
+  static async extractText(
+    formData: FormData, 
+    pages?: number[]
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/extract-text`,
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      });
+        params: { pages }
+      }
+    );
+    return response.data;
+  }
 
-      return response.data.data;
-    } catch (error) {
-      console.error('텍스트 추출 실패:', error);
-      throw error;
-    }
-  },
-
-  // PDF 분할
-  splitPDF: async (file: File, tocStructure: TOCStructure): Promise<string[]> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('toc_structure', JSON.stringify(tocStructure));
-
-      const response = await axios.post(`${API_URL}/ascr/split-pdf`, formData, {
+  /**
+   * PDF 분할
+   */
+  static async splitPDF(
+    formData: FormData, 
+    tocStructure?: any
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/split-pdf`,
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      });
+        params: { toc_structure: JSON.stringify(tocStructure) }
+      }
+    );
+    return response.data;
+  }
 
-      return response.data.data;
-    } catch (error) {
-      console.error('PDF 분할 실패:', error);
-      throw error;
-    }
-  },
+  /**
+   * 표준 가격 목록 다운로드
+   */
+  static async downloadStandardPrice(
+    year: number, 
+    forceUpdate: boolean = false
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/download-standard-price`,
+      null,
+      {
+        params: { year, force_update: forceUpdate }
+      }
+    );
+    return response.data;
+  }
 
-  // 표준 가격 목록 다운로드
-  downloadStandardPrice: async (year: number, forceUpdate: boolean = false): Promise<StandardPriceResult> => {
-    try {
-      const response = await axios.post(`${API_URL}/ascr/download-standard-price`, {
-        year,
-        force_update: forceUpdate,
-      });
+  /**
+   * 가격 목록 검증
+   */
+  static async validatePriceList(year: number): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/validate-price-list`,
+      null,
+      {
+        params: { year }
+      }
+    );
+    return response.data;
+  }
 
-      return response.data.data;
-    } catch (error) {
-      console.error('표준 가격 목록 다운로드 실패:', error);
-      throw error;
-    }
-  },
-
-  // 표준 가격 목록 검증
-  validatePriceList: async (year: number): Promise<ValidationResult> => {
-    try {
-      const response = await axios.post(`${API_URL}/ascr/validate-price-list`, {
-        year,
-      });
-
-      return response.data.data;
-    } catch (error) {
-      console.error('표준 가격 목록 검증 실패:', error);
-      throw error;
-    }
-  },
-
-  // 지반 진실 데이터 분석
-  analyzeGroundTruth: async (file: File, analysisType: string = 'comprehensive'): Promise<any> => {
-    try {
-      const formData = new FormData();
-      formData.append('data_file', file);
-      formData.append('analysis_type', analysisType);
-
-      const response = await axios.post(`${API_URL}/ascr/analyze-ground-truth`, formData, {
+  /**
+   * 지반 진실 데이터 분석
+   */
+  static async analyzeGroundTruth(
+    formData: FormData, 
+    analysisType: string = 'comprehensive'
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/analyze-ground-truth`,
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      });
+        params: { analysis_type: analysisType }
+      }
+    );
+    return response.data;
+  }
 
-      return response.data.data;
-    } catch (error) {
-      console.error('지반 진실 데이터 분석 실패:', error);
-      throw error;
-    }
-  },
-
-  // 계층 구조 수정
-  fixHierarchy: async (file: File, fixType: string = 'dots_to_commas'): Promise<any> => {
-    try {
-      const formData = new FormData();
-      formData.append('structure_file', file);
-      formData.append('fix_type', fixType);
-
-      const response = await axios.post(`${API_URL}/ascr/fix-hierarchy`, formData, {
+  /**
+   * 계층 구조 수정
+   */
+  static async fixHierarchy(
+    formData: FormData, 
+    fixType: string = 'dots_to_commas'
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/fix-hierarchy`,
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      });
+        params: { fix_type: fixType }
+      }
+    );
+    return response.data;
+  }
 
-      return response.data.data;
-    } catch (error) {
-      console.error('계층 구조 수정 실패:', error);
-      throw error;
-    }
-  },
+  /**
+   * 작업 상태 조회
+   */
+  static async getTaskStatus(taskId: string): Promise<ASCRTaskStatus> {
+    const response = await apiClient.get<ASCRTaskStatus>(
+      `${this.BASE_URL}/status/${taskId}`
+    );
+    return response.data;
+  }
 
-  // ASCR 상태 확인
-  getStatus: async (): Promise<any> => {
-    try {
-      const response = await axios.get(`${API_URL}/ascr/status`);
-      return response.data.data;
-    } catch (error) {
-      console.error('ASCR 상태 확인 실패:', error);
-      throw error;
-    }
-  },
-};
+  /**
+   * 모든 작업 목록 조회
+   */
+  static async getAllTasks(): Promise<ASCRTaskStatus[]> {
+    const response = await apiClient.get<ASCRTaskStatus[]>(
+      `${this.BASE_URL}/tasks`
+    );
+    return response.data;
+  }
 
-export default ascrService; 
+  /**
+   * 작업 취소
+   */
+  static async cancelTask(taskId: string): Promise<void> {
+    await apiClient.delete(`${this.BASE_URL}/tasks/${taskId}`);
+  }
+
+  /**
+   * 성능 리포트 조회
+   */
+  static async getPerformanceReport(): Promise<any> {
+    const response = await apiClient.get(`${this.BASE_URL}/performance-report`);
+    return response.data;
+  }
+
+  /**
+   * 처리 통계 조회
+   */
+  static async getProcessingStats(): Promise<any> {
+    const response = await apiClient.get(`${this.BASE_URL}/stats`);
+    return response.data;
+  }
+
+  /**
+   * ASCR 모듈 상태 조회
+   */
+  static async getStatus(): Promise<any> {
+    const response = await apiClient.get(`${this.BASE_URL}/status`);
+    return response.data;
+  }
+
+  /**
+   * 배치 처리
+   */
+  static async batchProcess(
+    files: string[], 
+    outputDir: string, 
+    options: ASCRProcessingOptions
+  ): Promise<ASCRProcessingResponse> {
+    const response = await apiClient.post<ASCRProcessingResponse>(
+      `${this.BASE_URL}/batch`,
+      {
+        files,
+        output_dir: outputDir,
+        processing_type: options.processingType,
+        options: options.options
+      }
+    );
+    return response.data;
+  }
+} 

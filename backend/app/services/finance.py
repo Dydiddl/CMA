@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
-from ..models.financial import FinancialRecord, FinancialDocument
-from ..schemas.financial import (
+from app.models.financial import FinancialRecord, FinancialDocument
+from app.schemas.financial import (
     FinancialRecordCreate,
     FinancialRecordUpdate,
     FinancialDocumentCreate

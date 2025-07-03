@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
-from ..models.labor import Labor, WorkLog
-from ..schemas.labor import (
+from app.models.labor import Labor, WorkLog
+from app.schemas.labor import (
     LaborCreate,
     LaborUpdate,
     WorkLogCreate

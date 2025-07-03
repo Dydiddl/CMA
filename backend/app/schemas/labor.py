@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime, date
 
@@ -11,23 +11,25 @@ class WorkLogBase(BaseModel):
     description: Optional[str] = Field(None, description="작업내용")
     status: str = Field(..., description="지급상태")
 
-    @validator('end_time')
-    def end_time_must_be_after_start_time(cls, v, values):
-        if 'start_time' in values and v <= values['start_time']:
+    @field_validator('end_time')
+    @classmethod
+    def end_time_must_be_after_start_time(cls, v, info):
+        if 'start_time' in info.data and v <= info.data['start_time']:
             raise ValueError('종료시간은 시작시간보다 이후여야 합니다')
         return v
 
-    @validator('work_hours')
-    def validate_work_hours(cls, v, values):
-        if 'start_time' in values and 'end_time' in values:
-            time_diff = values['end_time'] - values['start_time']
+    @field_validator('work_hours')
+    @classmethod
+    def validate_work_hours(cls, v, info):
+        if 'start_time' in info.data and 'end_time' in info.data:
+            time_diff = info.data['end_time'] - info.data['start_time']
             calculated_hours = time_diff.total_seconds() / 3600
             if abs(v - calculated_hours) > 0.1:  # 6분 이상 차이나면 경고
                 raise ValueError('작업시간이 시작/종료시간과 일치하지 않습니다')
         return v
 
 class WorkLogCreate(WorkLogBase):
-    labor_id: int = Field(..., description="근로자 ID")
+    labor_id: str = Field(..., description="근로자 ID")
 
 class WorkLogUpdate(BaseModel):
     work_date: Optional[date] = None
@@ -39,14 +41,13 @@ class WorkLogUpdate(BaseModel):
     status: Optional[str] = None
 
 class WorkLog(WorkLogBase):
-    id: int
-    labor_id: int
+    id: str
+    labor_id: str
     total_amount: float
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class LaborBase(BaseModel):
     name: str = Field(..., description="이름")
@@ -56,7 +57,9 @@ class LaborBase(BaseModel):
     bank_account: str = Field(..., description="계좌번호")
     daily_wage: float = Field(..., gt=0, description="일당")
     status: str = Field(..., description="재직상태")
-    contract_id: int = Field(..., description="계약 ID")
+    contract_id: Optional[str] = Field(None, description="계약 ID")
+    project_id: Optional[str] = Field(None, description="프로젝트 ID")
+    user_id: Optional[str] = Field(None, description="사용자 ID")
 
 class LaborCreate(LaborBase):
     pass
@@ -68,26 +71,25 @@ class LaborUpdate(BaseModel):
     bank_account: Optional[str] = None
     daily_wage: Optional[float] = None
     status: Optional[str] = None
-    contract_id: Optional[int] = None
+    contract_id: Optional[str] = None
+    project_id: Optional[str] = None
 
 class Labor(LaborBase):
-    id: int
+    id: str
     created_at: datetime
     updated_at: datetime
     work_logs: List[WorkLog] = []
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class LaborResponse(LaborBase):
     """근로자 응답 스키마"""
-    id: int = Field(..., description="근로자 ID")
+    id: str = Field(..., description="근로자 ID")
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")
     work_logs: List[WorkLog] = Field(default=[], description="작업일지 목록")
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class LaborListResponse(BaseModel):
     """근로자 목록 응답 스키마"""
@@ -98,5 +100,4 @@ class LaborListResponse(BaseModel):
     size: int = Field(..., description="페이지 크기")
     message: Optional[str] = Field(None, description="응답 메시지")
     
-    class Config:
-        from_attributes = True 
+    model_config = {"from_attributes": True} 

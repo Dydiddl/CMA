@@ -47,7 +47,13 @@ class AuthService:
             
         Returns:
             str: 해시된 비밀번호
+            
+        Raises:
+            ValueError: 빈 비밀번호 또는 해싱 실패
         """
+        if not password or not password.strip():
+            raise ValueError("비밀번호는 비어있을 수 없습니다.")
+        
         try:
             return pwd_context.hash(password)
         except Exception as e:

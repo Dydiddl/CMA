@@ -288,10 +288,19 @@ class CacheKeys:
     USER_PROFILE = "user_profile"
     DASHBOARD_STATS = "dashboard_stats"
     LABOR_STATS = "labor_stats"
+    LABOR_LIST = "labor_list"
+    LABOR_DETAIL = "labor_detail"
+    LABOR_SUMMARY = "labor_summary"
     CONTRACT_STATS = "contract_stats"
+    CONTRACT_LIST = "contract_list"
+    CONTRACT_DETAIL = "contract_detail"
     FINANCIAL_STATS = "financial_stats"
     PROJECT_STATS = "project_stats"
+    PROJECT_LIST = "project_list"
+    PROJECT_DETAIL = "project_detail"
     VENDOR_STATS = "vendor_stats"
+    VENDOR_LIST = "vendor_list"
+    VENDOR_DETAIL = "vendor_detail"
 
 
 def get_cache():

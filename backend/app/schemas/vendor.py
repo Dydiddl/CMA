@@ -3,6 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 
 class VendorDocumentBase(BaseModel):
+    name: str = Field(..., description="문서명")
     document_type: str = Field(..., description="문서 유형 (사업자등록증, 통장사본 등)")
     file_name: str = Field(..., description="파일명")
     description: Optional[str] = Field(None, description="문서 설명")
@@ -34,9 +35,11 @@ class VendorBase(BaseModel):
     @validator('business_number')
     def validate_business_number(cls, v):
         # 사업자등록번호 형식 검증 (10자리 숫자)
-        if not v.isdigit() or len(v) != 10:
+        # 하이픈 제거 후 검증
+        clean_number = v.replace('-', '')
+        if not clean_number.isdigit() or len(clean_number) != 10:
             raise ValueError('사업자등록번호는 10자리 숫자여야 합니다')
-        return v
+        return clean_number
 
 class VendorCreate(VendorBase):
     pass
@@ -63,9 +66,19 @@ class Vendor(VendorBase):
         from_attributes = True
 
 
-class VendorResponse(VendorBase):
+class VendorResponse(BaseModel):
     """거래처 응답 스키마"""
     id: int = Field(..., description="거래처 ID")
+    name: str = Field(..., description="거래처명")
+    business_number: str = Field(..., description="사업자등록번호")
+    representative: str = Field(..., description="대표자명")
+    address: str = Field(..., description="주소")
+    phone: str = Field(..., description="연락처")
+    email: str = Field(..., description="이메일")
+    bank_name: str = Field(..., description="은행명")
+    bank_account: str = Field(..., description="계좌번호")
+    status: str = Field(..., description="거래 상태")
+    description: Optional[str] = Field(None, description="비고")
     created_at: datetime = Field(..., description="생성일")
     updated_at: datetime = Field(..., description="수정일")
     documents: List[VendorDocument] = Field(default=[], description="문서 목록")
