@@ -72,3 +72,23 @@ frontend/dist/
 
 # tauri
 src-tauri/target/
+
+# 루트 레벨 임시 파일들
+fix_logging_imports.py
+fix_pyside6_signals.py
+realtime_api_test.py
+simple_test_server.py
+test_api_connection.py
+main.py
+package-lock.json
+package.json
+
+# 문서 파일들 (임시)
+# 🏗 ASCR 프로젝트 개발 명세서 (건설공사 내역서 자동화.txt
+Ascr_module_template.md
+rules.md
+
+# 캐시 디렉토리들
+.mypy_cache/
+.pytest_cache/
+.cursor/
