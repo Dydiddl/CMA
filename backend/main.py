@@ -1,31 +1,73 @@
-# CMA 백엔드 실행 안내 파일
-# 실제 FastAPI 진입점은 app/main.py 입니다.
-#
-# 개발 서버 실행:
-#   cd backend
-#   source venv/bin/activate
-#   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-#
-# 이 파일은 더 이상 사용되지 않습니다.
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import project, task
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from datetime import datetime
+
+from backend.database import SessionLocal, engine
+from backend import models, schemas, crud
+from backend.auth import get_current_user, get_db
 
 app = FastAPI(title="Construction Management API")
 
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 개발 환경에서만 사용. 프로덕션에서는 특정 도메인만 허용
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(project.router)
-app.include_router(task.router)
+# 프로젝트 관련 엔드포인트
+@app.get("/api/projects", response_model=List[schemas.Project])
+def get_projects(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    projects = crud.get_projects(db, skip=skip, limit=limit)
+    return projects
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.post("/api/projects", response_model=schemas.Project)
+def create_project(
+    project: schemas.ProjectCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return crud.create_project(db=db, project=project, owner_id=current_user.id)
+
+@app.get("/api/projects/{project_id}", response_model=schemas.Project)
+def get_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_id=project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+@app.put("/api/projects/{project_id}", response_model=schemas.Project)
+def update_project(
+    project_id: int,
+    project: schemas.ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    updated_project = crud.update_project(db, project_id=project_id, project=project)
+    if updated_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return updated_project
+
+@app.delete("/api/projects/{project_id}")
+def delete_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    success = crud.delete_project(db, project_id=project_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return {"message": "Project deleted successfully"} 

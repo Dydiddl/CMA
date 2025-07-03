@@ -43,6 +43,30 @@ CMA는 건설업계의 복잡한 공사 내역서 작성과 관리를 자동화�
 - [ ] **테스트 커버리지** - 70% 이상 달성
 - [ ] **보안 강화** - 인증/인가 시스템 완성
 
+## 🏗️ ASCR 모듈 (건설공사 내역서 자동화)
+
+### 개발 배경 및 필요성
+- 건설공사 설계 시 반복적으로 유사한 구조의 문서를 수작업으로 작성
+- 매년 변경되는 **표준품셈**, **노임단가**, **조달청 제비율표** 등을 반영해야 하는 반복적이고 비효율적인 과정
+- **문서 자동화 시스템**을 구축하여 업무 강도를 줄이고, 실수를 방지하며, 최신 정보를 반영하는 체계 구축
+
+### 주요 기능
+| 기능 항목 | 설명 |
+|-----------|------|
+| 📥 PDF 데이터 수집 | 표준품셈 / 노임단가 / 제비율표 PDF 다운로드 및 저장 |
+| 🧠 데이터 구조화 | PDF 내용 → JSON/CSV/DB 형태로 가공 및 분류 |
+| 🧾 엑셀 내역서 자동 작성 | 가공된 데이터를 기존 엑셀 내역서 양식에 맞춰 자동 작성 |
+| 🔁 노임단가 최신화 | 전기/당기 노임 비교 및 자동 대체 |
+| ⚙ 제비율 자동 적용 | 조달청 제비율 데이터 기반 원가 계산서 최신화 |
+| 🧮 수량산출 자동화 | 사용자가 UI로 수량 입력 → 수량산출서 및 내역서 자동 연결 |
+| 🧍 사용자 입력 관리 | 자재단가, 공정내용, 공사 정보 등의 수동 입력 인터페이스 |
+| 📄 서식 템플릿 유지 | 기존 엑셀 서식 틀 유지 및 작성 위치 자동 반영 |
+
+### 개발 전략
+- **우선 완성 가능한 기능부터 구축**하여 전체 흐름이 가능한 수준의 MVP(최소 기능 제품) 개발
+- 이후 여유가 생길 때마다 머신러닝 등 고급 기능 또는 반복 입력 최소화 기능 추가
+- 자동화가 불가능한 부분은 사용자 수동 입력으로 보완하는 **반자동 시스템**으로 초기 출발
+
 ## 🛠 기술 스택
 
 ### Frontend
@@ -65,7 +89,7 @@ CMA는 건설업계의 복잡한 공사 내역서 작성과 관리를 자동화�
 - **Pandas 2.3.0** (데이터 처리)
 - **OpenPyXL 3.1.5** (Excel 처리)
 - **XlsxWriter 3.2.3** (Excel 생성)
-- **PyPDF2/PyMuPDF** (PDF 처리 - ASCR 모듈)
+- **pypdf/PyMuPDF** (PDF 처리 - ASCR 모듈)
 
 ### 성능 최적화
 - **Redis** (캐싱 및 세션 관리)
@@ -156,6 +180,7 @@ CMA/
 │   │   │   ├── excel/      # Excel 처리
 │   │   │   └── estimator/  # 추정서 생성
 │   │   └── core/           # 설정 및 보안
+│   └── main.py             # 백엔드 서버 진입점
 ├── frontend/               # React + TypeScript 프론트엔드
 │   ├── src/
 │   │   ├── components/     # React 컴포넌트
@@ -165,6 +190,20 @@ CMA/
 │   ├── ui/                 # PySide6 UI 컴포넌트
 │   ├── core/               # 공통 비즈니스 로직
 │   └── main.py             # 데스크톱 앱 진입점
+├── docs/                   # 프로젝트 문서
+│   ├── ASCR_PROJECT_SPECIFICATION.md  # ASCR 프로젝트 명세서
+│   ├── ASCR_MODULE_TEMPLATE.md        # ASCR 모듈 템플릿
+│   ├── PROJECT_RULES.md               # 프로젝트 규칙
+│   └── ...                 # 기타 문서들
+├── scripts/                # 유틸리티 스크립트
+│   ├── fix_logging_imports.py         # 로깅 import 수정
+│   ├── fix_pyside6_signals.py         # PySide6 시그널 수정
+│   └── ...                 # 기타 스크립트들
+├── test/                   # 테스트 파일들
+│   ├── api_connection_test.py         # API 연결 테스트
+│   ├── realtime_api_test.py           # 실시간 API 테스트
+│   ├── simple_test_server.py          # 간단한 테스트 서버
+│   └── ...                 # 기타 테스트들
 └── src-tauri/             # Tauri 데스크톱 앱 설정
 ```
 
@@ -201,256 +240,54 @@ git clone https://github.com/your-username/cma.git
 cd cma
 ```
 
-2. **백엔드 설정**
+2. **환경 설정**
 ```bash
+# 백엔드 환경 설정
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # Linux/Mac
+# 또는 venv\Scripts\activate  # Windows
 pip install -r requirements.txt
-```
 
-3. **프론트엔드 설정**
-```bash
-cd frontend
+# 프론트엔드 환경 설정
+cd ../frontend
 npm install
 ```
 
-4. **데이터베이스 설정**
+3. **데이터베이스 설정**
 ```bash
-# PostgreSQL 데이터베이스 생성
-createdb cma_db
-
-# 마이그레이션 실행
-cd backend
-alembic upgrade head
+# PostgreSQL 및 Redis 실행 (Docker 사용)
+docker-compose up -d postgres redis
 ```
 
-5. **개발 서버 실행**
+4. **개발 서버 실행**
 ```bash
-# 백엔드 (터미널 1)
+# 백엔드 서버 (새 터미널)
 cd backend
-uvicorn app.main:app --reload
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# 프론트엔드 (터미널 2)
+# 프론트엔드 서버 (새 터미널)
 cd frontend
 npm run dev
-
-# Tauri 개발 (터미널 3)
-cd src-tauri
-cargo tauri dev
 ```
 
-### 환경 변수 설정
-
-`.env` 파일을 생성하고 다음 설정을 추가하세요:
-
-```env
-# 데이터베이스
-DATABASE_URL=postgresql://user:password@localhost/cma_db
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# 보안
-SECRET_KEY=your-secret-key
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# 성능 설정
-MAX_WORKERS=4
-CACHE_TTL=3600
-API_TIMEOUT=30
-```
-
-## 📊 주요 기능
-
-### 1. 계약 관리 (진행 중)
-- 계약 생성, 수정, 삭제
-- 계약 상태 추적
-- 계약서 자동 생성
-- 계약 이력 관리
-
-### 2. 재무 관리 (진행 중)
-- 예산 계획 및 추적
-- 비용 분석 및 보고
-- 수익성 분석
-- 재무 보고서 자동 생성
-
-### 3. 노무 관리 (진행 중)
-- 인력 배치 및 관리
-- 작업 시간 추적
-- 임금 계산
-- 노무비 분석
-
-### 4. 문서 처리 (ASCR 모듈)
-- PDF 텍스트 추출
-- 목차 자동 생성
-- 문서 분할 및 병합
-- 표준품셈 자동 적용
-
-### 5. Excel 처리
-- 대용량 Excel 파일 처리
-- 데이터 자동 변환
-- 보고서 자동 생성
-- 데이터 검증 및 정리
-
-## 🔧 개발 가이드
-
-### 코드 스타일
-
-#### Python (PEP8 준수)
-```python
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-모듈 설명
-"""
-
-from typing import List, Dict, Optional
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-class ExampleService:
-    """서비스 클래스 설명"""
-    
-    def __init__(self):
-        self.thread_pool = ThreadPoolExecutor(max_workers=4)
-    
-    async def process_data(self, data: List[str]) -> List[Dict]:
-        """데이터 처리 - 비동기"""
-        # 비동기 처리 로직
-        return []
-```
-
-#### TypeScript (ESLint 준수)
-```typescript
-// 파일명: example-service.ts
-// 컴포넌트명: ExampleService
-// 변수명: camelCase
-
-interface ExampleData {
-  id: string;
-  name: string;
-  status: string;
-}
-
-export const ExampleService: React.FC<{
-  data: ExampleData[];
-  onUpdate: (data: ExampleData) => void;
-}> = ({ data, onUpdate }) => {
-  const handleUpdate = async (item: ExampleData) => {
-    try {
-      await onUpdate(item);
-    } catch (error) {
-      console.error('업데이트 실패:', error);
-    }
-  };
-
-  return (
-    <div className="example-service">
-      {/* 컴포넌트 내용 */}
-    </div>
-  );
-};
-```
-
-### 성능 최적화 패턴
-
-#### 비동기 처리
-```python
-# 비동기 API 엔드포인트
-@app.post("/contracts")
-async def create_contract(contract_data: ContractCreate):
-    # 비동기 서비스 호출
-    contract = await contract_service.create_contract(contract_data)
-    return contract
-```
-
-#### 멀티프로세싱
-```python
-# CPU 집약적 작업
-from multiprocessing import Pool
-
-def process_large_data(data_chunks):
-    with Pool() as pool:
-        results = pool.map(process_chunk, data_chunks)
-    return results
-```
-
-#### 캐싱 전략
-```python
-# Redis 캐싱
-@cache_manager.get_or_set("contracts:list", ttl=3600)
-async def get_contracts_list():
-    return await contract_service.get_all_contracts()
-```
-
-## 🧪 테스트
-
-### 테스트 실행
-
+### Docker를 사용한 전체 스택 실행
 ```bash
-# 백엔드 테스트
-cd backend
-pytest
+# 개발 환경
+docker-compose -f docker-compose.dev.yml up
 
-# 프론트엔드 테스트
-cd frontend
-npm test
-
-# 전체 테스트 커버리지
-pytest --cov=app --cov-report=html
+# 프로덕션 환경
+docker-compose up
 ```
 
-### 테스트 커버리지 목표
+## 📚 문서
 
-- **전체 커버리지**: 80% (현재 65%)
-- **단위 테스트**: 85% (현재 70%)
-- **통합 테스트**: 75% (현재 50%)
-- **E2E 테스트**: 60% (현재 30%)
-
-## 📦 배포
-
-### 개발 빌드
-
-```bash
-# Tauri 개발 빌드
-cd src-tauri
-cargo tauri build
-
-# 생성된 파일
-# Windows: target/release/bundle/msi/app_0.1.0_x64_en-US.msi
-# macOS: target/release/bundle/dmg/app_0.1.0_x64.dmg
-# Linux: target/release/bundle/appimage/app_0.1.0_amd64.AppImage
-```
-
-### 프로덕션 배포
-
-```bash
-# 백엔드 배포
-cd backend
-docker build -t cma-backend .
-docker run -p 8000:8000 cma-backend
-
-# 프론트엔드 배포
-cd frontend
-npm run build
-```
-
-## 🔄 버전 관리
-
-### Semantic Versioning
-
-- **MAJOR**: 기존 API와 호환되지 않는 변경
-- **MINOR**: 기존 API와 호환되는 새로운 기능
-- **PATCH**: 버그 수정
-
-### 브랜치 전략
-
-- **main**: 프로덕션 배포용
-- **develop**: 개발 통합용
-- **feature/**: 기능 개발
-- **hotfix/**: 긴급 버그 수정
-- **release/**: 릴리즈 준비
+- [ASCR 프로젝트 명세서](docs/ASCR_PROJECT_SPECIFICATION.md) - 건설공사 내역서 자동화 시스템 상세 명세
+- [ASCR 모듈 템플릿](docs/ASSCR_MODULE_TEMPLATE.md) - ASCR 모듈 개발 템플릿
+- [프로젝트 규칙](docs/PROJECT_RULES.md) - 개발 규칙 및 가이드라인
+- [API 문서](docs/API_DOCUMENTATION.md) - 백엔드 API 문서
+- [데이터베이스 스키마](docs/DATABASE_SCHEMAS.md) - 데이터베이스 구조 문서
 
 ## 🤝 기여하기
 
@@ -460,44 +297,14 @@ npm run build
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-### 커밋 메시지 규칙
-
-```
-<type>(<scope>): <description>
-
-# 타입
-feat: 새로운 기능 추가
-fix: 버그 수정
-perf: 성능 개선
-refactor: 코드 리팩토링
-test: 테스트 코드 추가/수정
-docs: 문서 수정
-style: 코드 포맷팅
-chore: 빌드 프로세스 변경
-
-# 예시
-feat(contract): 계약 생성 API 엔드포인트 추가
-perf(database): 데이터베이스 쿼리 최적화
-fix(performance): 메모리 누수 수정
-```
-
 ## 📄 라이선스
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ## 📞 연락처
 
-- **프로젝트 관리자**: [이름] - [이메일]
-- **기술 문의**: [이메일]
-- **버그 리포트**: [GitHub Issues](https://github.com/your-username/cma/issues)
-
-## 🙏 감사의 말
-
-- [FastAPI](https://fastapi.tiangolo.com/) - 현대적이고 빠른 웹 프레임워크
-- [Tauri](https://tauri.app/) - 안전하고 빠른 데스크톱 앱 프레임워크
-- [React](https://reactjs.org/) - 사용자 인터페이스 구축 라이브러리
-- [PostgreSQL](https://www.postgresql.org/) - 강력한 오픈소스 데이터베이스
+프로젝트 링크: [https://github.com/your-username/cma](https://github.com/your-username/cma)
 
 ---
 
-**CMA** - 건설업계의 디지털 혁신을 이끄는 솔루션 🏗️
+**CMA** - 건설 관리의 미래를 만들어갑니다 🏗️
