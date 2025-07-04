@@ -1,7 +1,7 @@
 """
 계약 모델 모듈
 """
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text, Date
+from sqlalchemy import Column, String, DateTime, Float, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -27,6 +27,10 @@ class Contract(Base):
     # 상태 및 설명
     status = Column(String(50), nullable=False, default="진행중", comment="계약 상태")
     description = Column(Text, nullable=True, comment="계약 설명")
+    
+    # 소프트 삭제
+    deleted_at = Column(DateTime, nullable=True, comment="삭제일")
+    is_deleted = Column(Boolean, default=False, nullable=False, comment="삭제 여부")
     
     # 외래키
     vendor_id = Column(String, ForeignKey("vendors.id"), nullable=False, comment="거래처 ID")

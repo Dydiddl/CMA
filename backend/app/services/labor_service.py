@@ -77,8 +77,8 @@ class LaborService:
             return cached_result
         
         try:
-            # 기본 쿼리
-            query = self.db.query(Labor)
+            # 기본 쿼리 (삭제되지 않은 노무자만)
+            query = self.db.query(Labor).filter(Labor.is_deleted.is_(False))
             
             # 검색 조건 적용
             if search:
@@ -134,7 +134,10 @@ class LaborService:
             return cached_labor
         
         try:
-            labor = self.db.query(Labor).filter(Labor.id == labor_id).first()
+            labor = self.db.query(Labor).filter(
+                Labor.id == labor_id,
+                Labor.is_deleted.is_(False)
+            ).first()
             
             if not labor:
                 return None
@@ -153,7 +156,10 @@ class LaborService:
     def update_labor(self, labor_id: str, labor_update: LaborUpdate) -> Optional[LaborResponse]:
         """노무자 수정 - 캐싱 무효화"""
         try:
-            labor = self.db.query(Labor).filter(Labor.id == labor_id).first()
+            labor = self.db.query(Labor).filter(
+                Labor.id == labor_id,
+                Labor.is_deleted.is_(False)
+            ).first()
             if not labor:
                 return None
             
@@ -196,7 +202,10 @@ class LaborService:
     def delete_labor(self, labor_id: str) -> bool:
         """노무자 삭제 - 캐싱 무효화"""
         try:
-            labor = self.db.query(Labor).filter(Labor.id == labor_id).first()
+            labor = self.db.query(Labor).filter(
+                Labor.id == labor_id,
+                Labor.is_deleted.is_(False)
+            ).first()
             if not labor:
                 return False
             
@@ -208,7 +217,10 @@ class LaborService:
             if related_records > 0:
                 logger.warning(f"노무자 삭제 시도: {labor_id} (관련 기록 {related_records}개 존재)")
             
-            self.db.delete(labor)
+            # 소프트 삭제 (실제 삭제 대신 상태 변경)
+            labor.status = "삭제됨"
+            labor.deleted_at = datetime.utcnow()
+            labor.is_deleted = True
             self.db.commit()
             
             # 캐시 무효화
@@ -240,14 +252,21 @@ class LaborService:
             week_start = now - timedelta(days=now.weekday())
             week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
             
-            # 기본 통계
-            total_workers = self.db.query(func.count(Labor.id)).scalar()
+            # 기본 통계 (삭제되지 않은 노무자만)
+            total_workers = self.db.query(func.count(Labor.id)).filter(
+                Labor.is_deleted.is_(False)
+            ).scalar()
             active_workers = self.db.query(func.count(Labor.id)).filter(
-                Labor.status == "재직"
+                and_(
+                    Labor.status == "재직",
+                    Labor.is_deleted.is_(False)
+                )
             ).scalar()
             
-            # 평균 시급
-            avg_wage_result = self.db.query(func.avg(Labor.daily_wage)).scalar()
+            # 평균 시급 (삭제되지 않은 노무자만)
+            avg_wage_result = self.db.query(func.avg(Labor.daily_wage)).filter(
+                Labor.is_deleted.is_(False)
+            ).scalar()
             average_wage = float(avg_wage_result) if avg_wage_result else 0.0
             
             # 이번 달 근무 기록 통계

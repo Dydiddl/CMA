@@ -373,6 +373,7 @@ class TestVendorService:
             name="사업자등록증",
             document_type="사업자등록증",
             file_name="사업자등록증.pdf",
+            file_path="/path/to/사업자등록증.pdf",
             description="사업자등록증 문서"
         )
         new_document = Mock(spec=VendorDocument)
@@ -380,8 +381,11 @@ class TestVendorService:
         new_document.name = document_data.name
         new_document.document_type = document_data.document_type
         new_document.file_name = document_data.file_name
+        new_document.file_path = document_data.file_path
         new_document.description = document_data.description
         new_document.vendor_id = vendor_id
+        new_document.created_at = "2024-01-01T00:00:00"
+        new_document.updated_at = "2024-01-01T00:00:00"
         
         # Mock 설정
         vendor_service.db.add.return_value = None
@@ -403,8 +407,10 @@ class TestVendorService:
         # Given
         vendor_id = 1
         document_data = VendorDocumentCreate(
+            name="사업자등록증",
             document_type="사업자등록증",
             file_name="사업자등록증.pdf",
+            file_path="/path/to/사업자등록증.pdf",
             description="사업자등록증 문서"
         )
         
@@ -425,12 +431,16 @@ class TestVendorService:
         document1.name = "사업자등록증"
         document1.file_path = "/path/to/doc1.pdf"
         document1.document_type = "사업자등록증"
+        document1.created_at = "2024-01-01T00:00:00"
+        document1.updated_at = "2024-01-01T00:00:00"
         
         document2 = Mock(spec=VendorDocument)
         document2.id = 2
         document2.name = "계약서"
         document2.file_path = "/path/to/doc2.pdf"
         document2.document_type = "계약서"
+        document2.created_at = "2024-01-01T00:00:00"
+        document2.updated_at = "2024-01-01T00:00:00"
         
         # Mock 설정
         mock_query = Mock()
@@ -461,4 +471,212 @@ class TestVendorService:
         result = vendor_service.get_vendor_documents(vendor_id)
         
         # Then
-        assert len(result) == 0 
+        assert len(result) == 0
+
+    @pytest.mark.asyncio
+    async def test_get_vendor_by_id_success(self, vendor_service, mock_db):
+        """거래처 ID로 조회 성공 테스트"""
+        # Given
+        vendor_id = "vendor-test-123"
+        mock_vendor = Mock()
+        mock_vendor.id = "vendor-test-123"
+        mock_vendor.name = "테스트 거래처"
+        mock_vendor.business_number = "1234567890"
+        mock_vendor.representative = "홍길동"
+        mock_vendor.address = "서울시 강남구 테스트로 123"
+        mock_vendor.phone = "02-1234-5678"
+        mock_vendor.email = "test@vendor.com"
+        mock_vendor.bank_name = "신한은행"
+        mock_vendor.bank_account = "110-123-456789"
+        mock_vendor.status = "활성"
+        mock_vendor.description = "테스트용 거래처입니다."
+        mock_vendor.bank_info = {"bank_name": "신한은행", "account_number": "110-123-456789"}
+        mock_vendor.documents = {}
+        mock_vendor.created_at = "2024-01-01T00:00:00"
+        mock_vendor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_vendor
+        
+        # When
+        result = await vendor_service.get_vendor_by_id(vendor_id)
+        
+        # Then
+        assert result is not None
+        assert result.id == vendor_id
+        assert result.name == "테스트 거래처"
+        assert result.business_number == "1234567890"
+        mock_db.query.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_create_vendor_success(self, vendor_service, mock_db):
+        """거래처 생성 성공 테스트"""
+        # Given
+        vendor_data = VendorCreate(
+            name="새 거래처",
+            business_number="9876543210",
+            representative="김철수",
+            address="서울시 서초구 새로 456",
+            phone="02-9876-5432",
+            email="new@vendor.com",
+            bank_name="국민은행",
+            bank_account="123-456-789012",
+            status="활성",
+            description="새로운 거래처입니다."
+        )
+        
+        mock_vendor = Mock()
+        mock_vendor.id = "vendor-new-123"
+        mock_vendor.name = "새 거래처"
+        mock_vendor.business_number = "9876543210"
+        mock_vendor.representative = "김철수"
+        mock_vendor.address = "서울시 서초구 새로 456"
+        mock_vendor.phone = "02-9876-5432"
+        mock_vendor.email = "new@vendor.com"
+        mock_vendor.bank_name = "국민은행"
+        mock_vendor.bank_account = "123-456-789012"
+        mock_vendor.status = "활성"
+        mock_vendor.description = "새로운 거래처입니다."
+        mock_vendor.bank_info = {"bank_name": "국민은행", "account_number": "123-456-789012"}
+        mock_vendor.documents = {}
+        mock_vendor.created_at = "2024-01-01T00:00:00"
+        mock_vendor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.add.return_value = None
+        mock_db.commit.return_value = None
+        mock_db.refresh.return_value = None
+        
+        # When
+        result = await vendor_service.create_vendor(vendor_data)
+        
+        # Then
+        assert result is not None
+        assert result.name == "새 거래처"
+        assert result.business_number == "9876543210"
+        mock_db.add.assert_called_once()
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_update_vendor_success(self, vendor_service, mock_db):
+        """거래처 수정 성공 테스트"""
+        # Given
+        vendor_id = "vendor-test-123"
+        vendor_update = VendorUpdate(
+            name="수정된 거래처",
+            phone="02-1111-2222",
+            status="비활성"
+        )
+        
+        mock_vendor = Mock()
+        mock_vendor.id = "vendor-test-123"
+        mock_vendor.name = "수정된 거래처"
+        mock_vendor.business_number = "1234567890"
+        mock_vendor.representative = "홍길동"
+        mock_vendor.address = "서울시 강남구 테스트로 123"
+        mock_vendor.phone = "02-1111-2222"
+        mock_vendor.email = "test@vendor.com"
+        mock_vendor.bank_name = "신한은행"
+        mock_vendor.bank_account = "110-123-456789"
+        mock_vendor.status = "비활성"
+        mock_vendor.description = "테스트용 거래처입니다."
+        mock_vendor.bank_info = {"bank_name": "신한은행", "account_number": "110-123-456789"}
+        mock_vendor.documents = {}
+        mock_vendor.created_at = "2024-01-01T00:00:00"
+        mock_vendor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_vendor
+        mock_db.commit.return_value = None
+        mock_db.refresh.return_value = None
+        
+        # When
+        result = await vendor_service.update_vendor(vendor_id, vendor_update)
+        
+        # Then
+        assert result is not None
+        assert result.name == "수정된 거래처"
+        assert result.phone == "02-1111-2222"
+        assert result.status == "비활성"
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_vendor_success(self, vendor_service, mock_db):
+        """거래처 삭제 성공 테스트"""
+        # Given
+        vendor_id = "vendor-test-123"
+        mock_vendor = Mock()
+        mock_vendor.id = "vendor-test-123"
+        mock_vendor.name = "테스트 거래처"
+        mock_vendor.business_number = "1234567890"
+        mock_vendor.representative = "홍길동"
+        mock_vendor.address = "서울시 강남구 테스트로 123"
+        mock_vendor.phone = "02-1234-5678"
+        mock_vendor.email = "test@vendor.com"
+        mock_vendor.bank_name = "신한은행"
+        mock_vendor.bank_account = "110-123-456789"
+        mock_vendor.status = "활성"
+        mock_vendor.description = "테스트용 거래처입니다."
+        mock_vendor.bank_info = {"bank_name": "신한은행", "account_number": "110-123-456789"}
+        mock_vendor.documents = {}
+        mock_vendor.created_at = "2024-01-01T00:00:00"
+        mock_vendor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_vendor
+        mock_db.delete.return_value = None
+        mock_db.commit.return_value = None
+        
+        # When
+        result = await vendor_service.delete_vendor(vendor_id)
+        
+        # Then
+        assert result is True
+        mock_db.delete.assert_called_once_with(mock_vendor)
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_vendors_success(self, vendor_service, mock_db):
+        """거래처 목록 조회 성공 테스트"""
+        # Given
+        mock_vendor1 = Mock()
+        mock_vendor1.id = "vendor-test-1"
+        mock_vendor1.name = "테스트 거래처 1"
+        mock_vendor1.business_number = "1234567890"
+        mock_vendor1.representative = "홍길동"
+        mock_vendor1.address = "서울시 강남구 테스트로 123"
+        mock_vendor1.phone = "02-1234-5678"
+        mock_vendor1.email = "test1@vendor.com"
+        mock_vendor1.bank_name = "신한은행"
+        mock_vendor1.bank_account = "110-123-456789"
+        mock_vendor1.status = "활성"
+        mock_vendor1.description = "테스트용 거래처 1입니다."
+        mock_vendor1.bank_info = {"bank_name": "신한은행", "account_number": "110-123-456789"}
+        mock_vendor1.documents = {}
+        mock_vendor1.created_at = "2024-01-01T00:00:00"
+        mock_vendor1.updated_at = "2024-01-01T00:00:00"
+        
+        mock_vendor2 = Mock()
+        mock_vendor2.id = "vendor-test-2"
+        mock_vendor2.name = "테스트 거래처 2"
+        mock_vendor2.business_number = "0987654321"
+        mock_vendor2.representative = "김철수"
+        mock_vendor2.address = "서울시 서초구 테스트로 456"
+        mock_vendor2.phone = "02-9876-5432"
+        mock_vendor2.email = "test2@vendor.com"
+        mock_vendor2.bank_name = "국민은행"
+        mock_vendor2.bank_account = "123-456-789012"
+        mock_vendor2.status = "활성"
+        mock_vendor2.description = "테스트용 거래처 2입니다."
+        mock_vendor2.bank_info = {"bank_name": "국민은행", "account_number": "123-456-789012"}
+        mock_vendor2.documents = {}
+        mock_vendor2.created_at = "2024-01-01T00:00:00"
+        mock_vendor2.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.offset.return_value.limit.return_value.all.return_value = [mock_vendor1, mock_vendor2]
+        mock_db.query.return_value.count.return_value = 2
+        
+        # When
+        result, total = await vendor_service.get_vendors(skip=0, limit=10)
+        
+        # Then
+        assert len(result) == 2
+        assert total == 2
+        assert result[0].name == "테스트 거래처 1"
+        assert result[1].name == "테스트 거래처 2" 

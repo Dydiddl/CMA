@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text, Date
+from sqlalchemy import Column, String, DateTime, Float, ForeignKey, Text, Date, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -18,6 +18,10 @@ class Labor(Base):
     contract_id = Column(String, ForeignKey("contracts.id"), nullable=True)
     project_id = Column(String, ForeignKey("projects.id"), nullable=True)
     user_id = Column(String, ForeignKey("users.id"), nullable=True, comment="사용자 ID")
+    
+    # 소프트 삭제
+    deleted_at = Column(DateTime, nullable=True, comment="삭제일")
+    is_deleted = Column(Boolean, default=False, nullable=False, comment="삭제 여부")
 
     # 관계 설정 - 문자열로 참조하여 순환 참조 방지
     contract = relationship("Contract", back_populates="labors")

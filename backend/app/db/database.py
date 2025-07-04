@@ -77,26 +77,46 @@ def init_db():
     애플리케이션 시작 시 호출됩니다.
     """
     # 모든 모델을 import해야 테이블이 생성됩니다
-    from ..models import user, vendor, contract, labor_cost, transaction
+    from ..models import (
+        user, vendor, contract, labor_cost, transaction,
+        financial, labor, project, client, document,
+        expense, revenue, worker
+    )
     
     # 테이블 생성
     Base.metadata.create_all(bind=engine)
     
     # 성능 최적화를 위한 인덱스 생성 (SQLite 호환)
+    from sqlalchemy import text
     with engine.connect() as conn:
         if is_sqlite:
             # SQLite용 인덱스 생성
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_user_email ON users(email)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date)")
+            try:
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_user_email ON users(email)"))
+            except Exception as e:
+                print(f"[WARNING] users 인덱스 생성 실패: {e}")
+            try:
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status)"))
+            except Exception as e:
+                print(f"[WARNING] contracts 인덱스 생성 실패: {e}")
+            try:
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date)"))
+            except Exception as e:
+                print(f"[WARNING] transactions 인덱스 생성 실패: {e}")
+            try:
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date)"))
+            except Exception as e:
+                print(f"[WARNING] labor_costs 인덱스 생성 실패: {e}")
         else:
             # PostgreSQL용 인덱스 생성
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
-                CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status);
-                CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date);
-                CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date);
-            """)
+            try:
+                conn.execute(text("""
+                    CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
+                    CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status);
+                    CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date);
+                    CREATE INDEX IF NOT EXISTS idx_labor_cost_date ON labor_costs(work_date);
+                """))
+            except Exception as e:
+                print(f"[WARNING] PostgreSQL 인덱스 생성 실패: {e}")
     
     print("✅ 데이터베이스 테이블과 인덱스가 생성되었습니다.") 

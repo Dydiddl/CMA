@@ -7,6 +7,10 @@ import {
   Task as TaskIcon,
   Assessment as ReportIcon,
   Settings as SettingsIcon,
+  Business as ContractIcon,
+  AttachMoney as FinancialIcon,
+  People as LaborIcon,
+  Description as DocumentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -30,8 +34,12 @@ const StyledListItem = styled(ListItemButton)(({ theme }) => ({
 
 const menuItems = [
   { text: '대시보드', icon: <DashboardIcon />, path: '/' },
+  { text: '계약 관리', icon: <ContractIcon />, path: '/contracts' },
+  { text: '재무 관리', icon: <FinancialIcon />, path: '/financial' },
+  { text: '노무 관리', icon: <LaborIcon />, path: '/labor' },
   { text: '프로젝트', icon: <ProjectIcon />, path: '/projects' },
   { text: '작업', icon: <TaskIcon />, path: '/tasks' },
+  { text: 'ASCR', icon: <DocumentIcon />, path: '/ascr' },
   { text: '보고서', icon: <ReportIcon />, path: '/reports' },
 ];
 

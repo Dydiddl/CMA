@@ -8,10 +8,11 @@
 import json
 import time
 import logging
-from typing import Any, Optional, Dict, Union
+from typing import Any, Optional, Dict, Union, Callable
 from functools import wraps
 import asyncio
 from pathlib import Path
+import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,6 @@ class RedisCache:
     def _connect(self):
         """Redis 연결"""
         try:
-            import redis
             self.redis_client = redis.from_url(self.redis_url)
             # 연결 테스트
             self.redis_client.ping()
@@ -238,6 +238,122 @@ class HybridCache:
         """캐시 정리"""
         self.memory_cache.cleanup_expired()
 
+class CacheManager:
+    """Redis 기반 캐시 매니저"""
+    
+    def __init__(self, redis_url: str = "redis://localhost:6379"):
+        self.redis_url = redis_url
+        self.redis_client = None
+        self.default_ttl = 3600  # 1시간
+    
+    async def connect(self):
+        """Redis 연결"""
+        try:
+            self.redis_client = redis.from_url(self.redis_url)
+            await self.redis_client.ping()
+            logger.info("Redis 연결 성공")
+        except Exception as e:
+            logger.error(f"Redis 연결 실패: {e}")
+            self.redis_client = None
+    
+    async def disconnect(self):
+        """Redis 연결 해제"""
+        if self.redis_client:
+            await self.redis_client.close()
+            logger.info("Redis 연결 해제")
+    
+    async def get(self, key: str) -> Optional[str]:
+        """캐시에서 값 조회"""
+        try:
+            if not self.redis_client:
+                return None
+            return await self.redis_client.get(key)
+        except Exception as e:
+            logger.error(f"캐시 조회 실패: {e}")
+            return None
+    
+    async def set(self, key: str, value: str, ttl: Optional[int] = None) -> bool:
+        """캐시에 값 저장"""
+        try:
+            if not self.redis_client:
+                return False
+            ttl = ttl or self.default_ttl
+            await self.redis_client.setex(key, ttl, value)
+            return True
+        except Exception as e:
+            logger.error(f"캐시 저장 실패: {e}")
+            return False
+    
+    async def setex(self, key: str, ttl: int, value: str) -> bool:
+        """캐시에 값 저장 (TTL 지정)"""
+        return await self.set(key, value, ttl)
+    
+    async def delete(self, key: str) -> bool:
+        """캐시에서 값 삭제"""
+        try:
+            if not self.redis_client:
+                return False
+            await self.redis_client.delete(key)
+            return True
+        except Exception as e:
+            logger.error(f"캐시 삭제 실패: {e}")
+            return False
+    
+    async def delete_pattern(self, pattern: str) -> bool:
+        """패턴에 맞는 캐시 삭제"""
+        try:
+            if not self.redis_client:
+                return False
+            keys = await self.redis_client.keys(pattern)
+            if keys:
+                await self.redis_client.delete(*keys)
+            return True
+        except Exception as e:
+            logger.error(f"패턴 캐시 삭제 실패: {e}")
+            return False
+    
+    async def get_or_set(
+        self, 
+        key: str, 
+        getter_func: Callable, 
+        ttl: Optional[int] = None
+    ) -> Any:
+        """캐시에서 가져오거나 설정"""
+        # 캐시 확인
+        cached = await self.get(key)
+        if cached:
+            try:
+                return json.loads(cached)
+            except json.JSONDecodeError:
+                pass
+        
+        # 데이터 가져오기
+        data = getter_func()
+        
+        # 캐시 저장
+        await self.set(key, json.dumps(data), ttl)
+        return data
+    
+    async def exists(self, key: str) -> bool:
+        """키 존재 여부 확인"""
+        try:
+            if not self.redis_client:
+                return False
+            return await self.redis_client.exists(key)
+        except Exception as e:
+            logger.error(f"키 존재 확인 실패: {e}")
+            return False
+    
+    async def expire(self, key: str, ttl: int) -> bool:
+        """키 만료 시간 설정"""
+        try:
+            if not self.redis_client:
+                return False
+            return await self.redis_client.expire(key, ttl)
+        except Exception as e:
+            logger.error(f"키 만료 시간 설정 실패: {e}")
+            return False
+
 def cache_result(ttl: int = 3600, key_prefix: str = ""):
     """함수 결과 캐싱 데코레이터"""
     def decorator(func):
@@ -246,16 +362,30 @@ def cache_result(ttl: int = 3600, key_prefix: str = ""):
             # 캐시 키 생성
             cache_key = f"{key_prefix}:{func.__name__}:{hash(str(args) + str(kwargs))}"
             
-            # 캐시에서 확인
+            # 캐시 매니저 인스턴스 찾기
+            cache_manager = None
+            for arg in args:
+                if hasattr(arg, 'cache') and isinstance(arg.cache, CacheManager):
+                    cache_manager = arg.cache
+                    break
+            
+            if not cache_manager:
+                # 캐시 없이 함수 실행
+                return await func(*args, **kwargs)
+            
+            # 캐시에서 조회 시도
             cached_result = await cache_manager.get(cache_key)
-            if cached_result is not None:
-                return cached_result
+            if cached_result:
+                try:
+                    return json.loads(cached_result)
+                except json.JSONDecodeError:
+                    pass
             
             # 함수 실행
             result = await func(*args, **kwargs)
             
             # 결과 캐싱
-            await cache_manager.set(cache_key, result, ttl)
+            await cache_manager.set(cache_key, json.dumps(result), ttl)
             
             return result
         return wrapper

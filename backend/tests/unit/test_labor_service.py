@@ -51,29 +51,215 @@ class TestLaborService:
             "contract_id": "contract-1"
         }
     
-    def test_create_labor_success(self, labor_service, mock_db, sample_labor_data):
-        """노무자 생성 성공 테스트"""
+    @pytest.mark.asyncio
+    async def test_get_labor_by_id_success(self, labor_service, mock_db):
+        """노무자 ID로 조회 성공 테스트"""
         # Given
-        labor_create = LaborCreate(**sample_labor_data)
-        mock_labor = Mock(spec=Labor)
-        mock_labor.name = sample_labor_data["name"]
+        labor_id = "labor-test-123"
+        mock_labor = Mock()
+        mock_labor.id = "labor-test-123"
+        mock_labor.name = "홍길동"
+        mock_labor.phone = "010-1234-5678"
+        mock_labor.id_number = "900101-1234567"
+        mock_labor.bank_name = "신한은행"
+        mock_labor.bank_account = "110-123-456789"
+        mock_labor.daily_wage = 20000.0
+        mock_labor.status = "재직"
+        mock_labor.contract_id = "contract-test-123"
+        mock_labor.project_id = "project-test-123"
+        mock_labor.user_id = "user-test-123"
+        mock_labor.deleted_at = None
+        mock_labor.is_deleted = False
+        mock_labor.created_at = "2024-01-01T00:00:00"
+        mock_labor.updated_at = "2024-01-01T00:00:00"
         
-        # 중복 검사 결과 (중복 없음)
-        labor_service.db.query.return_value.filter.return_value.first.return_value = None
-        
-        # 생성된 노무자 반환
-        labor_service.db.add.return_value = None
-        labor_service.db.commit.return_value = None
-        labor_service.db.refresh.return_value = None
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_labor
         
         # When
-        result = labor_service.create_labor(labor_create)
+        result = await labor_service.get_labor_by_id(labor_id)
         
         # Then
         assert result is not None
-        labor_service.db.add.assert_called_once()
-        labor_service.db.commit.assert_called_once()
-        labor_service.db.refresh.assert_called_once()
+        assert result.id == labor_id
+        assert result.name == "홍길동"
+        assert result.daily_wage == 20000.0
+        mock_db.query.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_create_labor_success(self, labor_service, mock_db):
+        """노무자 생성 성공 테스트"""
+        # Given
+        labor_data = LaborCreate(
+            name="김철수",
+            phone="010-9876-5432",
+            id_number="880101-8765432",
+            bank_name="국민은행",
+            bank_account="123-456-789012",
+            daily_wage=25000.0,
+            status="재직",
+            contract_id="contract-test-123",
+            project_id="project-test-123",
+            user_id="user-test-123"
+        )
+        
+        mock_labor = Mock()
+        mock_labor.id = "labor-new-123"
+        mock_labor.name = "김철수"
+        mock_labor.phone = "010-9876-5432"
+        mock_labor.id_number = "880101-8765432"
+        mock_labor.bank_name = "국민은행"
+        mock_labor.bank_account = "123-456-789012"
+        mock_labor.daily_wage = 25000.0
+        mock_labor.status = "재직"
+        mock_labor.contract_id = "contract-test-123"
+        mock_labor.project_id = "project-test-123"
+        mock_labor.user_id = "user-test-123"
+        mock_labor.deleted_at = None
+        mock_labor.is_deleted = False
+        mock_labor.created_at = "2024-01-01T00:00:00"
+        mock_labor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.add.return_value = None
+        mock_db.commit.return_value = None
+        mock_db.refresh.return_value = None
+        
+        # When
+        result = await labor_service.create_labor(labor_data)
+        
+        # Then
+        assert result is not None
+        assert result.name == "김철수"
+        assert result.daily_wage == 25000.0
+        mock_db.add.assert_called_once()
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_update_labor_success(self, labor_service, mock_db):
+        """노무자 수정 성공 테스트"""
+        # Given
+        labor_id = "labor-test-123"
+        labor_update = LaborUpdate(
+            name="수정된 홍길동",
+            phone="010-1111-2222",
+            daily_wage=22000.0,
+            status="휴직"
+        )
+        
+        mock_labor = Mock()
+        mock_labor.id = "labor-test-123"
+        mock_labor.name = "수정된 홍길동"
+        mock_labor.phone = "010-1111-2222"
+        mock_labor.id_number = "900101-1234567"
+        mock_labor.bank_name = "신한은행"
+        mock_labor.bank_account = "110-123-456789"
+        mock_labor.daily_wage = 22000.0
+        mock_labor.status = "휴직"
+        mock_labor.contract_id = "contract-test-123"
+        mock_labor.project_id = "project-test-123"
+        mock_labor.user_id = "user-test-123"
+        mock_labor.deleted_at = None
+        mock_labor.is_deleted = False
+        mock_labor.created_at = "2024-01-01T00:00:00"
+        mock_labor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_labor
+        mock_db.commit.return_value = None
+        mock_db.refresh.return_value = None
+        
+        # When
+        result = await labor_service.update_labor(labor_id, labor_update)
+        
+        # Then
+        assert result is not None
+        assert result.name == "수정된 홍길동"
+        assert result.phone == "010-1111-2222"
+        assert result.daily_wage == 22000.0
+        assert result.status == "휴직"
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_labor_success(self, labor_service, mock_db):
+        """노무자 삭제 성공 테스트"""
+        # Given
+        labor_id = "labor-test-123"
+        mock_labor = Mock()
+        mock_labor.id = "labor-test-123"
+        mock_labor.name = "홍길동"
+        mock_labor.phone = "010-1234-5678"
+        mock_labor.id_number = "900101-1234567"
+        mock_labor.bank_name = "신한은행"
+        mock_labor.bank_account = "110-123-456789"
+        mock_labor.daily_wage = 20000.0
+        mock_labor.status = "재직"
+        mock_labor.contract_id = "contract-test-123"
+        mock_labor.project_id = "project-test-123"
+        mock_labor.user_id = "user-test-123"
+        mock_labor.deleted_at = None
+        mock_labor.is_deleted = False
+        mock_labor.created_at = "2024-01-01T00:00:00"
+        mock_labor.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_labor
+        mock_db.delete.return_value = None
+        mock_db.commit.return_value = None
+        
+        # When
+        result = await labor_service.delete_labor(labor_id)
+        
+        # Then
+        assert result is True
+        mock_db.delete.assert_called_once_with(mock_labor)
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_labors_success(self, labor_service, mock_db):
+        """노무자 목록 조회 성공 테스트"""
+        # Given
+        mock_labor1 = Mock()
+        mock_labor1.id = "labor-test-1"
+        mock_labor1.name = "홍길동"
+        mock_labor1.phone = "010-1234-5678"
+        mock_labor1.id_number = "900101-1234567"
+        mock_labor1.bank_name = "신한은행"
+        mock_labor1.bank_account = "110-123-456789"
+        mock_labor1.daily_wage = 20000.0
+        mock_labor1.status = "재직"
+        mock_labor1.contract_id = "contract-test-123"
+        mock_labor1.project_id = "project-test-123"
+        mock_labor1.user_id = "user-test-123"
+        mock_labor1.deleted_at = None
+        mock_labor1.is_deleted = False
+        mock_labor1.created_at = "2024-01-01T00:00:00"
+        mock_labor1.updated_at = "2024-01-01T00:00:00"
+        
+        mock_labor2 = Mock()
+        mock_labor2.id = "labor-test-2"
+        mock_labor2.name = "김철수"
+        mock_labor2.phone = "010-9876-5432"
+        mock_labor2.id_number = "880101-8765432"
+        mock_labor2.bank_name = "국민은행"
+        mock_labor2.bank_account = "123-456-789012"
+        mock_labor2.daily_wage = 25000.0
+        mock_labor2.status = "재직"
+        mock_labor2.contract_id = "contract-test-123"
+        mock_labor2.project_id = "project-test-123"
+        mock_labor2.user_id = "user-test-123"
+        mock_labor2.deleted_at = None
+        mock_labor2.is_deleted = False
+        mock_labor2.created_at = "2024-01-01T00:00:00"
+        mock_labor2.updated_at = "2024-01-01T00:00:00"
+        
+        mock_db.query.return_value.offset.return_value.limit.return_value.all.return_value = [mock_labor1, mock_labor2]
+        mock_db.query.return_value.count.return_value = 2
+        
+        # When
+        result, total = await labor_service.get_labors(skip=0, limit=10)
+        
+        # Then
+        assert len(result) == 2
+        assert total == 2
+        assert result[0].name == "홍길동"
+        assert result[1].name == "김철수"
     
     def test_create_labor_duplicate_error(self, labor_service, mock_db, sample_labor_data):
         """노무자 생성 중복 오류 테스트"""
@@ -94,7 +280,12 @@ class TestLaborService:
         mock_labor = Mock(spec=Labor)
         mock_labor.id = "test-id"
         mock_labor.name = "홍길동"
-        
+        mock_labor.phone = "010-1234-5678"
+        mock_labor.job_type = "기술자"
+        mock_labor.status = "재직"
+        mock_labor.created_at = "2024-01-01T00:00:00"
+        mock_labor.updated_at = "2024-01-01T00:00:00"
+
         labor_service.db.query.return_value.filter.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_labor]
         labor_service.db.query.return_value.filter.return_value.count.return_value = 1
         
@@ -120,23 +311,6 @@ class TestLaborService:
         assert total == cached_result[1]
         # 데이터베이스 쿼리 호출되지 않음
         labor_service.db.query.assert_not_called()
-    
-    def test_get_labor_by_id_success(self, labor_service, mock_db, mock_cache):
-        """노무자 ID로 조회 성공 테스트"""
-        # Given
-        labor_id = "test-id"
-        mock_labor = Mock(spec=Labor)
-        mock_labor.id = labor_id
-        mock_labor.name = "홍길동"
-        
-        labor_service.db.query.return_value.filter.return_value.first.return_value = mock_labor
-        
-        # When
-        result = labor_service.get_labor_by_id(labor_id)
-        
-        # Then
-        assert result is not None
-        mock_cache.set.assert_called()
     
     def test_get_labor_by_id_not_found(self, labor_service, mock_db, mock_cache):
         """노무자 ID로 조회 실패 테스트"""
@@ -165,26 +339,6 @@ class TestLaborService:
         # 데이터베이스 쿼리 호출되지 않음
         labor_service.db.query.assert_not_called()
     
-    def test_update_labor_success(self, labor_service, mock_db, sample_labor_data):
-        """노무자 수정 성공 테스트"""
-        # Given
-        labor_id = "test-id"
-        mock_labor = Mock(spec=Labor)
-        mock_labor.id = labor_id
-        mock_labor.name = "홍길동"
-        
-        labor_service.db.query.return_value.filter.return_value.first.return_value = mock_labor
-        labor_service.db.query.return_value.filter.return_value.first.return_value = None  # 중복 검사
-        
-        labor_update = LaborUpdate(name="김철수")
-        
-        # When
-        result = labor_service.update_labor(labor_id, labor_update)
-        
-        # Then
-        assert result is not None
-        labor_service.db.commit.assert_called_once()
-    
     def test_update_labor_not_found(self, labor_service, mock_db):
         """노무자 수정 실패 테스트"""
         # Given
@@ -198,25 +352,6 @@ class TestLaborService:
         
         # Then
         assert result is None
-    
-    def test_delete_labor_success(self, labor_service, mock_db):
-        """노무자 삭제 성공 테스트"""
-        # Given
-        labor_id = "test-id"
-        mock_labor = Mock(spec=Labor)
-        mock_labor.id = labor_id
-        mock_labor.name = "홍길동"
-        
-        labor_service.db.query.return_value.filter.return_value.first.return_value = mock_labor
-        labor_service.db.query.return_value.filter.return_value.count.return_value = 0
-        
-        # When
-        result = labor_service.delete_labor(labor_id)
-        
-        # Then
-        assert result is True
-        labor_service.db.delete.assert_called_once_with(mock_labor)
-        labor_service.db.commit.assert_called_once()
     
     def test_delete_labor_not_found(self, labor_service, mock_db):
         """노무자 삭제 실패 테스트"""
@@ -285,10 +420,23 @@ class TestLaborService:
                 "project_id": "project-1"
             }
         ]
-        
+
+        # Mock 생성된 레코드들
+        mock_records = []
+        for i, record_data in enumerate(records_data):
+            mock_record = Mock()
+            mock_record.id = f"record-{i+1}"
+            mock_record.worker_id = record_data["worker_id"]
+            mock_record.work_date = record_data["work_date"]
+            mock_record.hours_worked = record_data["hours_worked"]
+            mock_record.project_id = record_data["project_id"]
+            mock_record.created_at = "2024-01-01T00:00:00"
+            mock_record.updated_at = "2024-01-01T00:00:00"
+            mock_records.append(mock_record)
+
         # When
         result = labor_service.batch_create_labor_records(records_data)
-        
+
         # Then
         assert len(result) == 2
         labor_service.db.bulk_save_objects.assert_called_once()

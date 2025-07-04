@@ -253,12 +253,28 @@ PUT /api/v1/users/{user_id}
 }
 ```
 
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 1,
+    "username": "admin",
+    "email": "updated@example.com",
+    "role": "MANAGER",
+    "is_active": true,
+    "updated_at": "2024-01-23T10:30:00Z"
+  },
+  "message": "사용자 정보가 성공적으로 수정되었습니다."
+}
+```
+
 ### 5. 사용자 삭제
 ```http
 DELETE /api/v1/users/{user_id}
 ```
 
-**설명:** 사용자 삭제 (소프트 삭제)
+**설명:** 사용자 삭제 (관리자만 가능)
 
 **응답:**
 ```json
@@ -273,47 +289,96 @@ DELETE /api/v1/users/{user_id}
 
 ### 1. 계약 목록 조회
 ```http
-GET /api/v1/contracts/?skip=0&limit=10&search=테스트&status=진행중&vendor_id=1
+GET /api/v1/contracts/?page=1&limit=20&search=아파트&status=진행중
 ```
 
-**설명:** 계약 목록을 다양한 필터로 조회
+**설명:** 계약 목록을 페이징과 검색으로 조회
 
 **쿼리 파라미터:**
-- `skip` (int): 건너뛸 레코드 수
-- `limit` (int): 가져올 레코드 수
-- `search` (string): 검색어 (계약명, 계약번호, 발주처명)
-- `status` (string): 상태 필터
-- `vendor_id` (int): 거래처 ID 필터
-- `start_date` (date): 시작일 필터
-- `end_date` (date): 종료일 필터
+- `page` (int): 페이지 번호 (기본값: 1)
+- `limit` (int): 페이지당 항목 수 (기본값: 20)
+- `search` (string): 검색어 (프로젝트명)
+- `status` (string): 계약 상태 (진행중, 완료, 취소)
+- `vendor_id` (string): 거래처 ID
+- `start_date` (date): 시작일
+- `end_date` (date): 종료일
+- `sort` (string): 정렬 기준 (created_at, contract_date, contract_amount)
+- `order` (string): 정렬 방향 (asc, desc)
 
 **응답:**
 ```json
 {
   "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "name": "테스트 계약",
-      "contract_number": "CON-2024-001",
-      "contract_amount": 1000000,
-      "status": "진행중",
-      "client_name": "테스트 발주처",
-      "vendor_name": "테스트 거래처",
-      "contract_date": "2024-01-23T00:00:00Z",
-      "created_at": "2024-01-23T10:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "size": 10,
-  "message": null
+  "data": {
+    "items": [
+      {
+        "id": "contract-uuid",
+        "project_name": "아파트 신축공사",
+        "contract_amount": 1000000000,
+        "contract_date": "2024-03-20",
+        "vendor": {
+          "id": "vendor-uuid",
+          "company_name": "건설회사"
+        },
+        "status": "진행중",
+        "created_at": "2024-03-20T10:00:00Z"
+      }
+    ],
+    "total": 200,
+    "page": 1,
+    "limit": 20
+  },
+  "message": "계약 목록을 성공적으로 조회했습니다."
 }
 ```
 
-### 2. 계약 생성
+### 2. 계약 상세 조회
 ```http
-POST /api/v1/contracts/
+GET /api/v1/contracts/{contract_id}
+```
+
+**설명:** 특정 계약의 상세 정보 조회
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "contract-uuid",
+    "project_name": "아파트 신축공사",
+    "contract_amount": 1000000000,
+    "contract_date": "2024-03-20",
+    "vendor": {
+      "id": "vendor-uuid",
+      "company_name": "건설회사",
+      "representative": "김대표"
+    },
+    "status": "진행중",
+    "documents": {
+      "contract_file": "계약서.pdf",
+      "attachments": [
+        "부록1.pdf",
+        "부록2.pdf"
+      ]
+    },
+    "payments": [
+      {
+        "id": "payment-uuid",
+        "amount": 300000000,
+        "due_date": "2024-04-20",
+        "status": "미지급"
+      }
+    ],
+    "created_at": "2024-03-20T10:00:00Z",
+    "updated_at": "2024-03-20T15:30:00Z"
+  },
+  "message": "계약 정보를 성공적으로 조회했습니다."
+}
+```
+
+### 3. 계약 생성
+```http
+POST /api/v1/contracts
 ```
 
 **설명:** 새로운 계약 생성
@@ -321,73 +386,45 @@ POST /api/v1/contracts/
 **요청 본문:**
 ```json
 {
-  "name": "테스트 계약",
-  "contract_number": "CON-2024-001",
-  "contract_amount": 1000000,
-  "contract_date": "2024-01-23T00:00:00Z",
-  "start_date": "2024-01-23T00:00:00Z",
-  "end_date": "2024-12-31T00:00:00Z",
-  "client_name": "테스트 발주처",
-  "client_contact": "010-1234-5678",
+  "project_name": "아파트 신축공사",
+  "contract_amount": 1000000000,
+  "contract_date": "2024-03-20",
+  "vendor_id": "vendor-uuid",
   "status": "진행중",
-  "description": "테스트 계약입니다.",
-  "vendor_id": 1
+  "documents": {
+    "contract_file": "계약서.pdf",
+    "attachments": [
+      "부록1.pdf",
+      "부록2.pdf"
+    ]
+  }
 }
 ```
-
-**검증 규칙:**
-- `contract_number`: 고유해야 함
-- `contract_amount`: 0보다 커야 함
-- `end_date`: `start_date`보다 늦어야 함
-- `client_name`: 필수 입력
-
-### 3. 계약 상세 조회
-```http
-GET /api/v1/contracts/{contract_id}
-```
-
-**설명:** 계약 상세 정보 및 관련 데이터 조회
 
 **응답:**
 ```json
 {
   "status": "success",
   "data": {
-    "id": 1,
-    "name": "테스트 계약",
-    "contract_number": "CON-2024-001",
-    "contract_amount": 1000000,
-    "contract_date": "2024-01-23T00:00:00Z",
-    "start_date": "2024-01-23T00:00:00Z",
-    "end_date": "2024-12-31T00:00:00Z",
-    "client_name": "테스트 발주처",
-    "client_contact": "010-1234-5678",
+    "id": "contract-uuid",
+    "project_name": "아파트 신축공사",
+    "contract_amount": 1000000000,
+    "contract_date": "2024-03-20",
+    "vendor": {
+      "id": "vendor-uuid",
+      "company_name": "건설회사"
+    },
     "status": "진행중",
-    "description": "테스트 계약입니다.",
-    "vendor_id": 1,
-    "vendor_name": "테스트 거래처",
-    "created_at": "2024-01-23T10:30:00Z",
-    "updated_at": "2024-01-23T10:30:00Z"
+    "documents": {
+      "contract_file": "계약서.pdf",
+      "attachments": [
+        "부록1.pdf",
+        "부록2.pdf"
+      ]
+    },
+    "created_at": "2024-03-20T10:00:00Z"
   },
-  "documents": [
-    {
-      "id": 1,
-      "document_type": "계약서",
-      "file_name": "contract.pdf",
-      "upload_date": "2024-01-23T10:30:00Z",
-      "description": "계약서 파일"
-    }
-  ],
-  "financial_summary": {
-    "total_income": 500000,
-    "total_expense": 300000,
-    "profit": 200000
-  },
-  "labor_summary": {
-    "total_hours": 160,
-    "total_cost": 2400000
-  },
-  "message": null
+  "message": "계약이 성공적으로 등록되었습니다."
 }
 ```
 
@@ -396,15 +433,47 @@ GET /api/v1/contracts/{contract_id}
 PUT /api/v1/contracts/{contract_id}
 ```
 
-**설명:** 계약 정보 수정
+**설명:** 기존 계약 정보 수정
 
 **요청 본문:**
 ```json
 {
-  "name": "수정된 계약명",
   "status": "완료",
-  "description": "수정된 설명",
-  "end_date": "2024-06-30T00:00:00Z"
+  "documents": {
+    "attachments": [
+      "부록1.pdf",
+      "부록2.pdf",
+      "부록3.pdf"
+    ]
+  }
+}
+```
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "contract-uuid",
+    "project_name": "아파트 신축공사",
+    "contract_amount": 1000000000,
+    "contract_date": "2024-03-20",
+    "vendor": {
+      "id": "vendor-uuid",
+      "company_name": "건설회사"
+    },
+    "status": "완료",
+    "documents": {
+      "contract_file": "계약서.pdf",
+      "attachments": [
+        "부록1.pdf",
+        "부록2.pdf",
+        "부록3.pdf"
+      ]
+    },
+    "updated_at": "2024-03-20T16:00:00Z"
+  },
+  "message": "계약 정보가 성공적으로 수정되었습니다."
 }
 ```
 
@@ -413,7 +482,7 @@ PUT /api/v1/contracts/{contract_id}
 DELETE /api/v1/contracts/{contract_id}
 ```
 
-**설명:** 계약 삭제 (관련 데이터도 함께 삭제)
+**설명:** 계약 삭제
 
 **응답:**
 ```json
@@ -424,297 +493,179 @@ DELETE /api/v1/contracts/{contract_id}
 }
 ```
 
-## 💰 재무 관리 엔드포인트 (`/api/v1/finance`)
+## 👷 노무 관리 엔드포인트 (`/api/v1/labor-costs`)
 
-### 1. 재무 기록 목록 조회
+### 1. 노무비 목록 조회
 ```http
-GET /api/v1/finance/?skip=0&limit=10&type=지출&category=자재비&contract_id=1
+GET /api/v1/labor-costs/?page=1&limit=20&contract_id=contract-uuid&worker_name=김일용
 ```
 
-**설명:** 재무 기록을 다양한 필터로 조회
+**설명:** 노무비 목록을 페이징과 검색으로 조회
 
 **쿼리 파라미터:**
-- `skip` (int): 건너뛸 레코드 수
-- `limit` (int): 가져올 레코드 수
-- `type` (string): 거래 유형 (수입/지출)
-- `category` (string): 카테고리
-- `contract_id` (int): 계약 ID
-- `vendor_id` (int): 거래처 ID
+- `page` (int): 페이지 번호 (기본값: 1)
+- `limit` (int): 페이지당 항목 수 (기본값: 20)
+- `contract_id` (string): 계약 ID
+- `worker_name` (string): 작업자 이름
+- `work_type` (string): 작업 유형
 - `start_date` (date): 시작일
 - `end_date` (date): 종료일
-- `status` (string): 지급 상태
-
-**응답:**
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "contract_id": 1,
-      "contract_name": "테스트 계약",
-      "transaction_date": "2024-01-23",
-      "amount": 500000,
-      "type": "지출",
-      "category": "자재비",
-      "description": "시멘트 구매",
-      "payment_method": "계좌이체",
-      "status": "지급완료",
-      "vendor_name": "테스트 거래처",
-      "created_at": "2024-01-23T10:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "size": 10,
-  "summary": {
-    "total_income": 1000000,
-    "total_expense": 500000,
-    "net_profit": 500000
-  },
-  "message": null
-}
-```
-
-### 2. 재무 기록 생성
-```http
-POST /api/v1/finance/
-```
-
-**설명:** 새로운 재무 기록 생성
-
-**요청 본문:**
-```json
-{
-  "contract_id": 1,
-  "transaction_date": "2024-01-23",
-  "amount": 500000,
-  "type": "지출",
-  "category": "자재비",
-  "description": "시멘트 구매",
-  "payment_method": "계좌이체",
-  "status": "지급완료",
-  "vendor_id": 1
-}
-```
-
-**검증 규칙:**
-- `amount`: 0보다 커야 함
-- `type`: "수입" 또는 "지출"이어야 함
-- `transaction_date`: 유효한 날짜여야 함
-
-### 3. 재무 기록 상세 조회
-```http
-GET /api/v1/finance/{record_id}
-```
-
-**설명:** 재무 기록 상세 정보 및 관련 문서 조회
+- `sort` (string): 정렬 기준 (work_date, daily_wage)
+- `order` (string): 정렬 방향 (asc, desc)
 
 **응답:**
 ```json
 {
   "status": "success",
   "data": {
-    "id": 1,
-    "contract_id": 1,
-    "contract_name": "테스트 계약",
-    "transaction_date": "2024-01-23",
-    "amount": 500000,
-    "type": "지출",
-    "category": "자재비",
-    "description": "시멘트 구매",
-    "payment_method": "계좌이체",
-    "status": "지급완료",
-    "vendor_id": 1,
-    "vendor_name": "테스트 거래처",
-    "created_at": "2024-01-23T10:30:00Z",
-    "updated_at": "2024-01-23T10:30:00Z"
+    "items": [
+      {
+        "id": "labor-cost-uuid",
+        "contract": {
+          "id": "contract-uuid",
+          "project_name": "아파트 신축공사"
+        },
+        "worker_name": "김일용",
+        "work_date": "2024-03-20",
+        "daily_wage": 150000,
+        "work_type": "철근공사",
+        "created_at": "2024-03-20T10:00:00Z"
+      }
+    ],
+    "total": 200,
+    "page": 1,
+    "limit": 20
   },
-  "documents": [
-    {
-      "id": 1,
-      "document_type": "영수증",
-      "file_name": "receipt.pdf",
-      "upload_date": "2024-01-23T10:30:00Z",
-      "description": "시멘트 구매 영수증"
-    }
-  ],
-  "message": null
+  "message": "노무비 목록을 성공적으로 조회했습니다."
 }
 ```
 
-### 4. 재무 기록 수정
+### 2. 노무비 상세 조회
 ```http
-PUT /api/v1/finance/{record_id}
+GET /api/v1/labor-costs/{labor_cost_id}
 ```
 
-**설명:** 재무 기록 수정
-
-**요청 본문:**
-```json
-{
-  "amount": 550000,
-  "description": "수정된 시멘트 구매",
-  "status": "지급완료"
-}
-```
-
-### 5. 재무 기록 삭제
-```http
-DELETE /api/v1/finance/{record_id}
-```
-
-**설명:** 재무 기록 삭제
-
-**응답:**
-```json
-{
-  "status": "success",
-  "data": null,
-  "message": "재무 기록이 성공적으로 삭제되었습니다."
-}
-```
-
-## 👷 노무 관리 엔드포인트 (`/api/v1/labor`)
-
-### 1. 노무 기록 목록 조회
-```http
-GET /api/v1/labor/?skip=0&limit=10&contract_id=1&worker_id=1&work_date=2024-01-23
-```
-
-**설명:** 노무 기록을 다양한 필터로 조회
-
-**쿼리 파라미터:**
-- `skip` (int): 건너뛸 레코드 수
-- `limit` (int): 가져올 레코드 수
-- `contract_id` (int): 계약 ID
-- `worker_id` (int): 근로자 ID
-- `work_date` (date): 작업일
-- `work_type` (string): 작업 유형
-- `status` (string): 지급 상태
-
-**응답:**
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "contract_id": 1,
-      "contract_name": "테스트 계약",
-      "worker_id": 1,
-      "worker_name": "홍길동",
-      "work_date": "2024-01-23",
-      "hours_worked": 8.0,
-      "hourly_rate": 15000,
-      "total_amount": 120000,
-      "work_type": "일반공사",
-      "description": "콘크리트 타설 작업",
-      "status": "미지급",
-      "created_at": "2024-01-23T10:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "size": 10,
-  "summary": {
-    "total_hours": 8.0,
-    "total_cost": 120000,
-    "average_hourly_rate": 15000
-  },
-  "message": null
-}
-```
-
-### 2. 노무 기록 생성
-```http
-POST /api/v1/labor/
-```
-
-**설명:** 새로운 노무 기록 생성
-
-**요청 본문:**
-```json
-{
-  "contract_id": 1,
-  "worker_id": 1,
-  "work_date": "2024-01-23",
-  "hours_worked": 8.0,
-  "hourly_rate": 15000,
-  "total_amount": 120000,
-  "work_type": "일반공사",
-  "description": "콘크리트 타설 작업",
-  "status": "미지급"
-}
-```
-
-**검증 규칙:**
-- `hours_worked`: 0보다 크고 24 이하여야 함
-- `hourly_rate`: 0 이상이어야 함
-- `total_amount`: `hours_worked * hourly_rate`와 일치해야 함
-
-### 3. 노무 기록 상세 조회
-```http
-GET /api/v1/labor/{labor_id}
-```
-
-**설명:** 노무 기록 상세 정보 조회
+**설명:** 특정 노무비의 상세 정보 조회
 
 **응답:**
 ```json
 {
   "status": "success",
   "data": {
-    "id": 1,
-    "contract_id": 1,
-    "contract_name": "테스트 계약",
-    "worker_id": 1,
-    "worker_name": "홍길동",
-    "worker_position": "일반공",
-    "work_date": "2024-01-23",
-    "hours_worked": 8.0,
-    "hourly_rate": 15000,
-    "total_amount": 120000,
-    "work_type": "일반공사",
-    "description": "콘크리트 타설 작업",
-    "status": "미지급",
-    "created_at": "2024-01-23T10:30:00Z",
-    "updated_at": "2024-01-23T10:30:00Z"
+    "id": "labor-cost-uuid",
+    "contract": {
+      "id": "contract-uuid",
+      "project_name": "아파트 신축공사",
+      "vendor": {
+        "id": "vendor-uuid",
+        "company_name": "건설회사"
+      }
+    },
+    "worker_name": "김일용",
+    "work_date": "2024-03-20",
+    "daily_wage": 150000,
+    "work_type": "철근공사",
+    "work_details": "1층 철근 배근 작업",
+    "payment_status": "미지급",
+    "created_at": "2024-03-20T10:00:00Z",
+    "updated_at": "2024-03-20T15:30:00Z"
   },
-  "message": null
+  "message": "노무비 정보를 성공적으로 조회했습니다."
 }
 ```
 
-### 4. 노무 기록 수정
+### 3. 노무비 생성
 ```http
-PUT /api/v1/labor/{labor_id}
+POST /api/v1/labor-costs
 ```
 
-**설명:** 노무 기록 수정
+**설명:** 새로운 노무비 기록 생성
 
 **요청 본문:**
 ```json
 {
-  "hours_worked": 9.0,
-  "total_amount": 135000,
-  "description": "수정된 콘크리트 타설 작업",
-  "status": "지급완료"
+  "contract_id": "contract-uuid",
+  "worker_name": "김일용",
+  "work_date": "2024-03-20",
+  "daily_wage": 150000,
+  "work_type": "철근공사",
+  "work_details": "1층 철근 배근 작업"
 }
 ```
 
-### 5. 노무 기록 삭제
-```http
-DELETE /api/v1/labor/{labor_id}
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "labor-cost-uuid",
+    "contract": {
+      "id": "contract-uuid",
+      "project_name": "아파트 신축공사"
+    },
+    "worker_name": "김일용",
+    "work_date": "2024-03-20",
+    "daily_wage": 150000,
+    "work_type": "철근공사",
+    "work_details": "1층 철근 배근 작업",
+    "payment_status": "미지급",
+    "created_at": "2024-03-20T10:00:00Z"
+  },
+  "message": "노무비가 성공적으로 등록되었습니다."
+}
 ```
 
-**설명:** 노무 기록 삭제
+### 4. 노무비 수정
+```http
+PUT /api/v1/labor-costs/{labor_cost_id}
+```
+
+**설명:** 기존 노무비 정보 수정
+
+**요청 본문:**
+```json
+{
+  "daily_wage": 160000,
+  "work_details": "1층 철근 배근 작업 수정",
+  "payment_status": "지급완료"
+}
+```
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "labor-cost-uuid",
+    "contract": {
+      "id": "contract-uuid",
+      "project_name": "아파트 신축공사"
+    },
+    "worker_name": "김일용",
+    "work_date": "2024-03-20",
+    "daily_wage": 160000,
+    "work_type": "철근공사",
+    "work_details": "1층 철근 배근 작업 수정",
+    "payment_status": "지급완료",
+    "updated_at": "2024-03-20T16:00:00Z"
+  },
+  "message": "노무비 정보가 성공적으로 수정되었습니다."
+}
+```
+
+### 5. 노무비 삭제
+```http
+DELETE /api/v1/labor-costs/{labor_cost_id}
+```
+
+**설명:** 노무비 기록 삭제
 
 **응답:**
 ```json
 {
   "status": "success",
   "data": null,
-  "message": "노무 기록이 성공적으로 삭제되었습니다."
+  "message": "노무비가 성공적으로 삭제되었습니다."
 }
 ```
 
@@ -722,44 +673,83 @@ DELETE /api/v1/labor/{labor_id}
 
 ### 1. 거래처 목록 조회
 ```http
-GET /api/v1/vendors/?skip=0&limit=10&search=테스트&vendor_type=자재업체
+GET /api/v1/vendors/?page=1&limit=20&search=건설&status=활성
 ```
 
-**설명:** 거래처 목록을 다양한 필터로 조회
+**설명:** 거래처 목록을 페이징과 검색으로 조회
 
 **쿼리 파라미터:**
-- `skip` (int): 건너뛸 레코드 수
-- `limit` (int): 가져올 레코드 수
-- `search` (string): 검색어 (거래처명, 연락처)
+- `page` (int): 페이지 번호 (기본값: 1)
+- `limit` (int): 페이지당 항목 수 (기본값: 20)
+- `search` (string): 검색어 (회사명, 대표자명)
+- `status` (string): 상태 필터 (활성, 비활성)
 - `vendor_type` (string): 거래처 유형
-- `status` (string): 상태 필터
+- `sort` (string): 정렬 기준 (company_name, created_at)
+- `order` (string): 정렬 방향 (asc, desc)
 
 **응답:**
 ```json
 {
   "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "name": "테스트 거래처",
-      "contact_person": "김철수",
-      "contact_number": "010-1234-5678",
-      "email": "test@vendor.com",
-      "vendor_type": "자재업체",
-      "status": "활성",
-      "created_at": "2024-01-23T10:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "size": 10,
-  "message": null
+  "data": {
+    "items": [
+      {
+        "id": "vendor-uuid",
+        "company_name": "건설회사",
+        "business_number": "123-45-67890",
+        "representative": "김대표",
+        "contact_phone": "02-1234-5678",
+        "status": "활성",
+        "created_at": "2024-03-20T10:00:00Z"
+      }
+    ],
+    "total": 50,
+    "page": 1,
+    "limit": 20
+  },
+  "message": "거래처 목록을 성공적으로 조회했습니다."
 }
 ```
 
-### 2. 거래처 생성
+### 2. 거래처 상세 조회
 ```http
-POST /api/v1/vendors/
+GET /api/v1/vendors/{vendor_id}
+```
+
+**설명:** 특정 거래처의 상세 정보 조회
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "vendor-uuid",
+    "company_name": "건설회사",
+    "business_number": "123-45-67890",
+    "representative": "김대표",
+    "contact_phone": "02-1234-5678",
+    "email": "contact@construction.com",
+    "address": "서울시 강남구 테헤란로 123",
+    "vendor_type": "건설업",
+    "status": "활성",
+    "contracts": [
+      {
+        "id": "contract-uuid",
+        "project_name": "아파트 신축공사",
+        "contract_amount": 1000000000,
+        "status": "진행중"
+      }
+    ],
+    "created_at": "2024-03-20T10:00:00Z",
+    "updated_at": "2024-03-20T15:30:00Z"
+  },
+  "message": "거래처 정보를 성공적으로 조회했습니다."
+}
+```
+
+### 3. 거래처 생성
+```http
+POST /api/v1/vendors
 ```
 
 **설명:** 새로운 거래처 생성
@@ -767,55 +757,34 @@ POST /api/v1/vendors/
 **요청 본문:**
 ```json
 {
-  "name": "테스트 거래처",
-  "contact_person": "김철수",
-  "contact_number": "010-1234-5678",
-  "email": "test@vendor.com",
-  "address": "서울시 강남구 테스트로 123",
-  "business_number": "123-45-67890",
-  "vendor_type": "자재업체",
+  "company_name": "새로운 건설회사",
+  "business_number": "987-65-43210",
+  "representative": "이대표",
+  "contact_phone": "02-9876-5432",
+  "email": "contact@newconstruction.com",
+  "address": "서울시 서초구 강남대로 456",
+  "vendor_type": "건설업",
   "status": "활성"
 }
 ```
-
-### 3. 거래처 상세 조회
-```http
-GET /api/v1/vendors/{vendor_id}
-```
-
-**설명:** 거래처 상세 정보 및 관련 계약 조회
 
 **응답:**
 ```json
 {
   "status": "success",
   "data": {
-    "id": 1,
-    "name": "테스트 거래처",
-    "contact_person": "김철수",
-    "contact_number": "010-1234-5678",
-    "email": "test@vendor.com",
-    "address": "서울시 강남구 테스트로 123",
-    "business_number": "123-45-67890",
-    "vendor_type": "자재업체",
+    "id": "vendor-uuid",
+    "company_name": "새로운 건설회사",
+    "business_number": "987-65-43210",
+    "representative": "이대표",
+    "contact_phone": "02-9876-5432",
+    "email": "contact@newconstruction.com",
+    "address": "서울시 서초구 강남대로 456",
+    "vendor_type": "건설업",
     "status": "활성",
-    "created_at": "2024-01-23T10:30:00Z",
-    "updated_at": "2024-01-23T10:30:00Z"
+    "created_at": "2024-03-20T10:00:00Z"
   },
-  "contracts": [
-    {
-      "id": 1,
-      "name": "테스트 계약",
-      "contract_number": "CON-2024-001",
-      "contract_amount": 1000000,
-      "status": "진행중"
-    }
-  ],
-  "financial_summary": {
-    "total_transactions": 5,
-    "total_amount": 2500000
-  },
-  "message": null
+  "message": "거래처가 성공적으로 등록되었습니다."
 }
 ```
 
@@ -824,15 +793,34 @@ GET /api/v1/vendors/{vendor_id}
 PUT /api/v1/vendors/{vendor_id}
 ```
 
-**설명:** 거래처 정보 수정
+**설명:** 기존 거래처 정보 수정
 
 **요청 본문:**
 ```json
 {
-  "contact_person": "이영희",
-  "contact_number": "010-9876-5432",
-  "email": "updated@vendor.com",
-  "status": "활성"
+  "contact_phone": "02-9999-8888",
+  "email": "updated@construction.com",
+  "status": "비활성"
+}
+```
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "vendor-uuid",
+    "company_name": "건설회사",
+    "business_number": "123-45-67890",
+    "representative": "김대표",
+    "contact_phone": "02-9999-8888",
+    "email": "updated@construction.com",
+    "address": "서울시 강남구 테헤란로 123",
+    "vendor_type": "건설업",
+    "status": "비활성",
+    "updated_at": "2024-03-20T16:00:00Z"
+  },
+  "message": "거래처 정보가 성공적으로 수정되었습니다."
 }
 ```
 
@@ -841,7 +829,7 @@ PUT /api/v1/vendors/{vendor_id}
 DELETE /api/v1/vendors/{vendor_id}
 ```
 
-**설명:** 거래처 삭제 (관련 계약이 없을 때만 가능)
+**설명:** 거래처 삭제
 
 **응답:**
 ```json
@@ -852,95 +840,112 @@ DELETE /api/v1/vendors/{vendor_id}
 }
 ```
 
-## 📄 ASCR 모듈 엔드포인트 (`/api/v1/ascr`)
+## 💰 재무 관리 엔드포인트 (`/api/v1/transactions`)
 
-### 1. PDF 목차 추출
+### 1. 거래 내역 목록 조회
 ```http
-POST /api/v1/ascr/extract-toc
+GET /api/v1/transactions/?page=1&limit=20&type=수입&contract_id=contract-uuid
 ```
 
-**설명:** PDF 파일에서 목차를 자동으로 추출
+**설명:** 재무 거래 내역을 페이징과 검색으로 조회
 
-**요청 본문 (multipart/form-data):**
-```
-file: PDF 파일 (최대 50MB)
-year: 2025 (선택사항)
-```
+**쿼리 파라미터:**
+- `page` (int): 페이지 번호 (기본값: 1)
+- `limit` (int): 페이지당 항목 수 (기본값: 20)
+- `type` (string): 거래 유형 (수입, 지출)
+- `contract_id` (string): 계약 ID
+- `category` (string): 카테고리 (자재비, 노무비, 경비 등)
+- `start_date` (date): 시작일
+- `end_date` (date): 종료일
+- `sort` (string): 정렬 기준 (transaction_date, amount)
+- `order` (string): 정렬 방향 (asc, desc)
 
 **응답:**
 ```json
 {
   "status": "success",
   "data": {
-    "year": 2025,
-    "output_file": "/output/toc_2025.md",
-    "extracted_sections": [
+    "items": [
       {
-        "section": "공통부문",
-        "start_page": 1,
-        "end_page": 50,
-        "chapters": [
-          {
-            "title": "제1장 적용기준",
-            "page": 3
-          },
-          {
-            "title": "제2장 가설공사",
-            "page": 33
-          }
-        ]
-      },
-      {
-        "section": "토목부문",
-        "start_page": 51,
-        "end_page": 100,
-        "chapters": [
-          {
-            "title": "제1장 토공",
-            "page": 53
-          }
-        ]
+        "id": "transaction-uuid",
+        "contract": {
+          "id": "contract-uuid",
+          "project_name": "아파트 신축공사"
+        },
+        "type": "수입",
+        "amount": 50000000,
+        "category": "계약금",
+        "transaction_date": "2024-03-20",
+        "description": "1차 계약금 지급",
+        "status": "완료",
+        "created_at": "2024-03-20T10:00:00Z"
       }
     ],
-    "processing_time": 2.5,
-    "file_size": "15.2MB",
-    "total_pages": 150
+    "total": 200,
+    "page": 1,
+    "limit": 20
   },
-  "message": "목차 추출이 완료되었습니다."
+  "message": "거래 내역을 성공적으로 조회했습니다."
 }
 ```
 
-### 2. PDF 분할
+### 2. 거래 내역 상세 조회
 ```http
-POST /api/v1/ascr/split-pdf
+GET /api/v1/transactions/{transaction_id}
 ```
 
-**설명:** PDF 파일을 부문별로 분할
+**설명:** 특정 거래 내역의 상세 정보 조회
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "transaction-uuid",
+    "contract": {
+      "id": "contract-uuid",
+      "project_name": "아파트 신축공사",
+      "vendor": {
+        "id": "vendor-uuid",
+        "company_name": "건설회사"
+      }
+    },
+    "type": "수입",
+    "amount": 50000000,
+    "category": "계약금",
+    "transaction_date": "2024-03-20",
+    "description": "1차 계약금 지급",
+    "payment_method": "계좌이체",
+    "status": "완료",
+    "attachments": [
+      "세금계산서.pdf",
+      "입금확인서.pdf"
+    ],
+    "created_at": "2024-03-20T10:00:00Z",
+    "updated_at": "2024-03-20T15:30:00Z"
+  },
+  "message": "거래 내역을 성공적으로 조회했습니다."
+}
+```
+
+### 3. 거래 내역 생성
+```http
+POST /api/v1/transactions
+```
+
+**설명:** 새로운 거래 내역 생성
 
 **요청 본문:**
 ```json
 {
-  "input_file": "/input/standard_2025.pdf",
-  "sections": [
-    {
-      "name": "공통부문",
-      "start_page": 1,
-      "end_page": 50,
-      "output_filename": "공통부문_2025.pdf"
-    },
-    {
-      "name": "토목부문",
-      "start_page": 51,
-      "end_page": 100,
-      "output_filename": "토목부문_2025.pdf"
-    },
-    {
-      "name": "건축부문",
-      "start_page": 101,
-      "end_page": 150,
-      "output_filename": "건축부문_2025.pdf"
-    }
-  ]
+  "contract_id": "contract-uuid",
+  "type": "수입",
+  "amount": 50000000,
+  "category": "계약금",
+  "transaction_date": "2024-03-20",
+  "description": "1차 계약금 지급",
+  "payment_method": "계좌이체",
+  "status": "완료"
 }
 ```
 
@@ -949,52 +954,37 @@ POST /api/v1/ascr/split-pdf
 {
   "status": "success",
   "data": {
-    "input_file": "/input/standard_2025.pdf",
-    "output_files": [
-      {
-        "name": "공통부문",
-        "filename": "공통부문_2025.pdf",
-        "file_path": "/output/공통부문_2025.pdf",
-        "pages": 50,
-        "file_size": "5.2MB"
-      },
-      {
-        "name": "토목부문",
-        "filename": "토목부문_2025.pdf",
-        "file_path": "/output/토목부문_2025.pdf",
-        "pages": 50,
-        "file_size": "4.8MB"
-      },
-      {
-        "name": "건축부문",
-        "filename": "건축부문_2025.pdf",
-        "file_path": "/output/건축부문_2025.pdf",
-        "pages": 50,
-        "file_size": "5.5MB"
-      }
-    ],
-    "processing_time": 8.3,
-    "total_pages": 150
+    "id": "transaction-uuid",
+    "contract": {
+      "id": "contract-uuid",
+      "project_name": "아파트 신축공사"
+    },
+    "type": "수입",
+    "amount": 50000000,
+    "category": "계약금",
+    "transaction_date": "2024-03-20",
+    "description": "1차 계약금 지급",
+    "payment_method": "계좌이체",
+    "status": "완료",
+    "created_at": "2024-03-20T10:00:00Z"
   },
-  "message": "PDF 분할이 완료되었습니다."
+  "message": "거래 내역이 성공적으로 등록되었습니다."
 }
 ```
 
-### 3. Excel 내역서 생성
+### 4. 거래 내역 수정
 ```http
-POST /api/v1/ascr/generate-excel
+PUT /api/v1/transactions/{transaction_id}
 ```
 
-**설명:** 계약 정보를 바탕으로 Excel 내역서 생성
+**설명:** 기존 거래 내역 정보 수정
 
 **요청 본문:**
 ```json
 {
-  "contract_id": 1,
-  "sections": ["공통부문", "토목부문"],
-  "template_type": "standard",
-  "include_pricing": true,
-  "include_descriptions": true
+  "amount": 55000000,
+  "description": "1차 계약금 지급 (수정)",
+  "status": "완료"
 }
 ```
 
@@ -1003,16 +993,37 @@ POST /api/v1/ascr/generate-excel
 {
   "status": "success",
   "data": {
-    "contract_id": 1,
-    "contract_name": "테스트 계약",
-    "output_file": "/output/내역서_CON-2024-001.xlsx",
-    "sections": ["공통부문", "토목부문"],
-    "total_items": 150,
-    "file_size": "2.1MB",
-    "processing_time": 3.2,
-    "generated_at": "2024-01-23T10:30:00Z"
+    "id": "transaction-uuid",
+    "contract": {
+      "id": "contract-uuid",
+      "project_name": "아파트 신축공사"
+    },
+    "type": "수입",
+    "amount": 55000000,
+    "category": "계약금",
+    "transaction_date": "2024-03-20",
+    "description": "1차 계약금 지급 (수정)",
+    "payment_method": "계좌이체",
+    "status": "완료",
+    "updated_at": "2024-03-20T16:00:00Z"
   },
-  "message": "Excel 내역서가 성공적으로 생성되었습니다."
+  "message": "거래 내역이 성공적으로 수정되었습니다."
+}
+```
+
+### 5. 거래 내역 삭제
+```http
+DELETE /api/v1/transactions/{transaction_id}
+```
+
+**설명:** 거래 내역 삭제
+
+**응답:**
+```json
+{
+  "status": "success",
+  "data": null,
+  "message": "거래 내역이 성공적으로 삭제되었습니다."
 }
 ```
 
@@ -1214,5 +1225,76 @@ ERROR_CODES = {
     "INTERNAL_SERVER_ERROR": "내부 서버 오류"
 }
 ```
+
+### API별 특정 에러 코드
+```python
+# 계약 관리 에러 코드
+CONTRACT_ERROR_CODES = {
+    "CONTRACT_NOT_FOUND": "계약을 찾을 수 없음",
+    "VENDOR_NOT_FOUND": "거래처를 찾을 수 없음",
+    "INVALID_STATUS": "잘못된 계약 상태"
+}
+
+# 노무 관리 에러 코드
+LABOR_ERROR_CODES = {
+    "LABOR_COST_NOT_FOUND": "노무비를 찾을 수 없음",
+    "CONTRACT_NOT_FOUND": "계약을 찾을 수 없음",
+    "INVALID_PAYMENT_STATUS": "잘못된 지급 상태"
+}
+
+# 거래처 관리 에러 코드
+VENDOR_ERROR_CODES = {
+    "VENDOR_NOT_FOUND": "거래처를 찾을 수 없음",
+    "DUPLICATE_BUSINESS_NUMBER": "중복된 사업자등록번호"
+}
+
+# 재무 관리 에러 코드
+TRANSACTION_ERROR_CODES = {
+    "TRANSACTION_NOT_FOUND": "거래 내역을 찾을 수 없음",
+    "INVALID_AMOUNT": "잘못된 금액",
+    "INVALID_TRANSACTION_TYPE": "잘못된 거래 유형"
+}
+```
+
+### API별 요청 제한
+```python
+RATE_LIMITS = {
+    # 인증 API
+    "auth_login": "1분에 5회",
+    "auth_refresh": "1분에 10회",
+    
+    # 조회 API
+    "contracts_list": "1초에 30회",
+    "contracts_detail": "1초에 30회",
+    "labor_costs_list": "1초에 30회",
+    "labor_costs_detail": "1초에 30회",
+    "vendors_list": "1초에 30회",
+    "vendors_detail": "1초에 30회",
+    "transactions_list": "1초에 30회",
+    "transactions_detail": "1초에 30회",
+    
+    # 생성/수정 API
+    "contracts_create": "1분에 10회",
+    "contracts_update": "1분에 10회",
+    "labor_costs_create": "1분에 10회",
+    "labor_costs_update": "1분에 10회",
+    "vendors_create": "1분에 10회",
+    "vendors_update": "1분에 10회",
+    "transactions_create": "1분에 10회",
+    "transactions_update": "1분에 10회",
+    
+    # 삭제 API
+    "contracts_delete": "1분에 5회",
+    "labor_costs_delete": "1분에 5회",
+    "vendors_delete": "1분에 5회",
+    "transactions_delete": "1분에 5회"
+}
+```
+
+### 성능 최적화 가이드
+1. **캐싱 활용**: 자주 조회되는 데이터는 캐시 사용
+2. **페이징**: 대용량 데이터는 페이징 처리
+3. **필터링**: 필요한 데이터만 조회
+4. **인덱스**: 자주 검색되는 필드에 인덱스 설정
 
 이 엔드포인트 문서를 통해 **완전하고 일관된** API 서비스를 제공할 수 있습니다. 

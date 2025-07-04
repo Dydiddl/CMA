@@ -21,20 +21,29 @@ CMA 시스템의 데이터베이스는 **PostgreSQL**을 기반으로 하며, **
          └───────────────────────┼───────────────────────┘
                                  │
                     ┌─────────────────┐
-                    │    Contracts    │
+                    │    Projects     │
                     │                 │
                     │ - id            │
                     │ - name          │
+                    │ - code          │
+                    │ - status        │
+                    └─────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │    Contracts    │
+                    │                 │
+                    │ - id            │
+                    │ - project_id    │
                     │ - contract_number│
                     │ - contract_amount│
-                    │ - vendor_id     │
-                    │ - client_name   │
+                    │ - client_id     │
                     └─────────────────┘
                                  │
                     ┌─────────────────┐
                     │ FinancialRecords│
                     │                 │
                     │ - id            │
+                    │ - project_id    │
                     │ - contract_id   │
                     │ - amount        │
                     │ - type          │
@@ -59,11 +68,62 @@ CMA 시스템의 데이터베이스는 **PostgreSQL**을 기반으로 하며, **
                     │ - position      │
                     │ - hourly_rate   │
                     └─────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │    Documents    │
+                    │                 │
+                    │ - id            │
+                    │ - project_id    │
+                    │ - contract_id   │
+                    │ - document_type │
+                    │ - file_path     │
+                    └─────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │    Progress     │
+                    │                 │
+                    │ - id            │
+                    │ - project_id    │
+                    │ - progress_percentage│
+                    │ - stage         │
+                    └─────────────────┘
 ```
 
 ## 📊 데이터 모델 상세
 
-### 1. 계약 관리 (Contracts)
+### 1. 프로젝트 관리 (Projects)
+
+#### Project 모델
+```python
+class Project(BaseModel):
+    """프로젝트(공사) 모델"""
+    __tablename__ = "projects"
+    
+    # 기본 정보
+    name = Column(String(255), nullable=False, index=True, comment="공사명")
+    code = Column(String(50), unique=True, nullable=False, index=True, comment="공사 코드")
+    description = Column(Text, nullable=True, comment="공사 설명")
+    status = Column(String(50), nullable=False, default="진행중", comment="공사 상태")
+    
+    # 관계 설정
+    contracts = relationship("Contract", back_populates="project", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="project", cascade="all, delete-orphan")
+    progress = relationship("Progress", back_populates="project", cascade="all, delete-orphan")
+    financial_records = relationship("FinancialRecord", back_populates="project", cascade="all, delete-orphan")
+```
+
+#### 프로젝트 상태 정의
+```python
+PROJECT_STATUS = {
+    "PLANNING": "기획중",
+    "ACTIVE": "진행중", 
+    "COMPLETED": "완료",
+    "CANCELLED": "취소",
+    "SUSPENDED": "중단"
+}
+```
+
+### 2. 계약 관리 (Contracts)
 
 #### Contract 모델
 ```python
@@ -72,40 +132,21 @@ class Contract(BaseModel):
     __tablename__ = "contracts"
     
     # 기본 정보
-    name = Column(String(255), nullable=False, index=True, comment="계약명")
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, comment="프로젝트 ID")
     contract_number = Column(String(50), unique=True, nullable=False, index=True, comment="계약번호")
-    contract_amount = Column(Float, nullable=False, comment="계약금액")
-    contract_date = Column(DateTime, nullable=False, comment="계약일")
-    start_date = Column(DateTime, nullable=True, comment="시작일")
-    end_date = Column(DateTime, nullable=True, comment="종료일")
-    
-    # 발주처 정보
-    client_name = Column(String(255), nullable=False, comment="발주처명")
-    client_contact = Column(String(100), nullable=True, comment="발주처 연락처")
-    
-    # 상태 및 설명
+    contract_date = Column(Date, nullable=False, comment="계약일")
+    contract_amount = Column(Decimal(15,2), nullable=False, comment="계약금액")
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False, comment="발주처 ID")
+    start_date = Column(Date, nullable=True, comment="착공일")
+    completion_date = Column(Date, nullable=True, comment="준공일")
     status = Column(String(50), nullable=False, default="진행중", comment="계약 상태")
-    description = Column(Text, nullable=True, comment="계약 설명")
     
-    # 외래키
-    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, comment="거래처 ID")
-```
-
-#### Contract 스키마
-```python
-class ContractBase(BaseModel):
-    """계약 기본 스키마"""
-    name: str = Field(..., min_length=1, max_length=255, description="계약명")
-    contract_number: str = Field(..., min_length=1, max_length=50, description="계약번호")
-    contract_amount: float = Field(..., gt=0, description="계약금액")
-    contract_date: datetime = Field(..., description="계약일")
-    start_date: Optional[datetime] = Field(None, description="시작일")
-    end_date: Optional[datetime] = Field(None, description="종료일")
-    client_name: str = Field(..., min_length=1, max_length=255, description="발주처명")
-    client_contact: Optional[str] = Field(None, max_length=100, description="발주처 연락처")
-    status: str = Field(default="진행중", description="계약 상태")
-    description: Optional[str] = Field(None, description="계약 설명")
-    vendor_id: str = Field(..., description="거래처 ID")
+    # 관계 설정
+    project = relationship("Project", back_populates="contracts")
+    client = relationship("Client", back_populates="contracts")
+    documents = relationship("Document", back_populates="contract", cascade="all, delete-orphan")
+    financial_records = relationship("FinancialRecord", back_populates="contract", cascade="all, delete-orphan")
+    labor_records = relationship("Labor", back_populates="contract", cascade="all, delete-orphan")
 ```
 
 #### 계약 상태 정의
@@ -119,7 +160,45 @@ CONTRACT_STATUS = {
 }
 ```
 
-### 2. 재무 관리 (Financial)
+### 3. 발주처 관리 (Clients)
+
+#### Client 모델
+```python
+class Client(BaseModel):
+    """발주처 모델"""
+    __tablename__ = "clients"
+    
+    # 기본 정보
+    name = Column(String(255), nullable=False, index=True, comment="발주처명")
+    business_number = Column(String(20), unique=True, nullable=False, comment="사업자등록번호")
+    address = Column(Text, nullable=True, comment="주소")
+    contact_person = Column(String(100), nullable=True, comment="담당자")
+    contact_phone = Column(String(20), nullable=True, comment="연락처")
+    
+    # 관계 설정
+    contracts = relationship("Contract", back_populates="client", cascade="all, delete-orphan")
+```
+
+### 4. 거래처 관리 (Vendors)
+
+#### Vendor 모델
+```python
+class Vendor(BaseModel):
+    """거래처 모델"""
+    __tablename__ = "vendors"
+    
+    # 기본 정보
+    name = Column(String(255), nullable=False, index=True, comment="거래처명")
+    business_number = Column(String(20), unique=True, nullable=False, comment="사업자등록번호")
+    address = Column(Text, nullable=True, comment="주소")
+    contact_person = Column(String(100), nullable=True, comment="담당자")
+    contact_phone = Column(String(20), nullable=True, comment="연락처")
+    
+    # 관계 설정
+    financial_records = relationship("FinancialRecord", back_populates="vendor", cascade="all, delete-orphan")
+```
+
+### 5. 재무 관리 (Financial)
 
 #### FinancialRecord 모델
 ```python
@@ -127,19 +206,28 @@ class FinancialRecord(BaseModel):
     """재무 기록 모델"""
     __tablename__ = "financial_records"
     
-    contract_id = Column(Integer, ForeignKey("contracts.id"))
-    transaction_date = Column(Date)
-    amount = Column(Float)
-    type = Column(String)  # 수입, 지출
-    category = Column(String)  # 자재비, 노무비, 경비 등
-    description = Column(Text)
-    payment_method = Column(String)  # 현금, 계좌이체, 카드 등
-    status = Column(String)  # 미지급, 지급완료 등
-    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=True)
+    # 기본 정보
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, comment="프로젝트 ID")
+    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True, comment="계약 ID")
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=True, comment="거래처 ID")
+    transaction_type = Column(String(50), nullable=False, comment="거래 유형")
+    amount = Column(Decimal(15,2), nullable=False, comment="금액")
+    transaction_date = Column(Date, nullable=False, comment="거래일")
+    description = Column(Text, nullable=True, comment="설명")
+    
+    # 관계 설정
+    project = relationship("Project", back_populates="financial_records")
+    contract = relationship("Contract", back_populates="financial_records")
+    vendor = relationship("Vendor", back_populates="financial_records")
 ```
 
 #### 재무 카테고리 정의
 ```python
+TRANSACTION_TYPES = {
+    "INCOME": "수입",
+    "EXPENSE": "지출"
+}
+
 FINANCIAL_CATEGORIES = {
     "MATERIAL": "자재비",
     "LABOR": "노무비", 
@@ -165,7 +253,7 @@ TRANSACTION_STATUS = {
 }
 ```
 
-### 3. 노무 관리 (Labor)
+### 6. 노무 관리 (Labor)
 
 #### Labor 모델
 ```python
@@ -173,15 +261,20 @@ class Labor(BaseModel):
     """노무 기록 모델"""
     __tablename__ = "labor_records"
     
-    contract_id = Column(Integer, ForeignKey("contracts.id"))
-    worker_id = Column(Integer, ForeignKey("workers.id"))
-    work_date = Column(Date)
-    hours_worked = Column(Float)
-    hourly_rate = Column(Float)
-    total_amount = Column(Float)
-    work_type = Column(String)  # 일반공사, 특수공사 등
-    description = Column(Text)
-    status = Column(String)  # 미지급, 지급완료 등
+    # 기본 정보
+    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=False, comment="계약 ID")
+    worker_id = Column(Integer, ForeignKey("workers.id"), nullable=False, comment="근로자 ID")
+    work_date = Column(Date, nullable=False, comment="작업일")
+    hours_worked = Column(Float, nullable=False, comment="작업 시간")
+    hourly_rate = Column(Decimal(10,2), nullable=False, comment="시급")
+    total_amount = Column(Decimal(15,2), nullable=False, comment="총 금액")
+    work_type = Column(String(100), nullable=True, comment="작업 유형")
+    description = Column(Text, nullable=True, comment="작업 설명")
+    status = Column(String(50), default="미지급", comment="지급 상태")
+    
+    # 관계 설정
+    contract = relationship("Contract", back_populates="labor_records")
+    worker = relationship("Worker", back_populates="labor_records")
 ```
 
 #### Worker 모델
@@ -190,240 +283,251 @@ class Worker(BaseModel):
     """근로자 모델"""
     __tablename__ = "workers"
     
-    name = Column(String(255), nullable=False)
-    position = Column(String(100))  # 직종
-    hourly_rate = Column(Float, default=0.0)
-    contact = Column(String(100))
-    address = Column(Text)
-    hire_date = Column(Date)
-    status = Column(String(50), default="활성")  # 활성, 비활성, 퇴사
-```
-
-### 4. 거래처 관리 (Vendors)
-
-#### Vendor 모델
-```python
-class Vendor(BaseModel):
-    """거래처 모델"""
-    __tablename__ = "vendors"
+    # 기본 정보
+    name = Column(String(255), nullable=False, index=True, comment="근로자명")
+    position = Column(String(100), nullable=True, comment="직종")
+    hourly_rate = Column(Decimal(10,2), default=0.0, comment="시급")
+    contact = Column(String(100), nullable=True, comment="연락처")
+    address = Column(Text, nullable=True, comment="주소")
+    hire_date = Column(Date, nullable=True, comment="고용일")
+    status = Column(String(50), default="활성", comment="상태")
     
-    name = Column(String(255), nullable=False, index=True)
-    contact_person = Column(String(100))
-    contact_number = Column(String(100))
-    email = Column(String(255))
-    address = Column(Text)
-    business_number = Column(String(50))  # 사업자번호
-    vendor_type = Column(String(50))  # 자재업체, 하청업체 등
-    status = Column(String(50), default="활성")
+    # 관계 설정
+    labor_records = relationship("Labor", back_populates="worker", cascade="all, delete-orphan")
 ```
 
-### 5. 문서 관리 (Documents)
-
-#### ContractDocument 모델
+#### 근로자 상태 정의
 ```python
-class ContractDocument(BaseModel):
-    """계약 문서 모델"""
-    __tablename__ = "contract_documents"
+WORKER_STATUS = {
+    "ACTIVE": "활성",
+    "INACTIVE": "비활성",
+    "RESIGNED": "퇴사"
+}
+
+WORK_TYPES = {
+    "GENERAL": "일반공사",
+    "SPECIAL": "특수공사",
+    "MANAGEMENT": "관리업무",
+    "OTHER": "기타"
+}
+```
+
+### 7. 문서 관리 (Documents)
+
+#### Document 모델
+```python
+class Document(BaseModel):
+    """문서 모델"""
+    __tablename__ = "documents"
     
-    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=False)
-    document_type = Column(String(50), nullable=False)  # 계약서, 도면, 명세서 등
-    file_path = Column(String(500), nullable=False)
-    file_name = Column(String(255), nullable=False)
-    upload_date = Column(DateTime, default=datetime.utcnow)
-    description = Column(Text, nullable=True)
+    # 기본 정보
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, comment="프로젝트 ID")
+    contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=True, comment="계약 ID")
+    document_type = Column(String(50), nullable=False, comment="문서 유형")
+    file_path = Column(String(255), nullable=False, comment="파일 경로")
+    original_filename = Column(String(255), nullable=False, comment="원본 파일명")
+    file_size = Column(Integer, nullable=False, comment="파일 크기")
+    uploaded_at = Column(DateTime, default=datetime.utcnow, comment="업로드 일시")
+    
+    # 관계 설정
+    project = relationship("Project", back_populates="documents")
+    contract = relationship("Contract", back_populates="documents")
 ```
 
-## 🔗 관계 정의
-
-### 1. 계약 관련 관계
+#### 문서 유형 정의
 ```python
-# Contract 모델의 관계
-vendor = relationship("Vendor", back_populates="contracts")
-documents = relationship("ContractDocument", back_populates="contract", cascade="all, delete-orphan")
-financial_records = relationship("FinancialRecord", back_populates="contract", cascade="all, delete-orphan")
-labors = relationship("Labor", back_populates="contract", cascade="all, delete-orphan")
+DOCUMENT_TYPES = {
+    "CONTRACT": "계약서",
+    "TAX_INVOICE": "세금계산서",
+    "PROGRESS_REPORT": "진행보고서",
+    "COMPLETION_REPORT": "완료보고서",
+    "DRAWING": "도면",
+    "SPECIFICATION": "시방서",
+    "OTHER": "기타"
+}
 ```
 
-### 2. 재무 관련 관계
+### 8. 진행상황 관리 (Progress)
+
+#### Progress 모델
 ```python
-# FinancialRecord 모델의 관계
-contract = relationship("Contract", back_populates="financial_records")
-vendor = relationship("Vendor", back_populates="financial_records")
-documents = relationship("FinancialDocument", back_populates="financial_record", cascade="all, delete-orphan")
+class Progress(BaseModel):
+    """진행상황 모델"""
+    __tablename__ = "progress"
+    
+    # 기본 정보
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, comment="프로젝트 ID")
+    progress_percentage = Column(Integer, nullable=False, comment="진행률")
+    stage = Column(String(100), nullable=False, comment="현재 단계")
+    description = Column(Text, nullable=True, comment="설명")
+    created_at = Column(DateTime, default=datetime.utcnow, comment="생성 일시")
+    
+    # 관계 설정
+    project = relationship("Project", back_populates="progress")
 ```
 
-### 3. 노무 관련 관계
+#### 진행 단계 정의
 ```python
-# Labor 모델의 관계
-contract = relationship("Contract", back_populates="labors")
-worker = relationship("Worker", back_populates="labor_records")
+PROGRESS_STAGES = {
+    "PLANNING": "기획",
+    "DESIGN": "설계",
+    "CONSTRUCTION": "시공",
+    "INSPECTION": "검사",
+    "COMPLETION": "완료"
+}
 ```
 
-## 📋 데이터 검증 규칙
+## 🔗 데이터 무결성 제약조건
 
-### 1. 계약 데이터 검증
-```python
-@validator('end_date')
-def validate_end_date(cls, v, values):
-    """종료일 검증"""
-    if v and 'start_date' in values and values['start_date']:
-        if v <= values['start_date']:
-            raise ValueError('종료일은 시작일보다 늦어야 합니다.')
-    return v
+### 외래 키 제약조건
+- `contracts.project_id` → `projects.id`
+- `contracts.client_id` → `clients.id`
+- `financial_records.project_id` → `projects.id`
+- `financial_records.contract_id` → `contracts.id`
+- `financial_records.vendor_id` → `vendors.id`
+- `labor_records.contract_id` → `contracts.id`
+- `labor_records.worker_id` → `workers.id`
+- `documents.project_id` → `projects.id`
+- `documents.contract_id` → `contracts.id`
+- `progress.project_id` → `projects.id`
 
-@validator('contract_amount')
-def validate_contract_amount(cls, v):
-    """계약금액 검증"""
-    if v <= 0:
-        raise ValueError('계약금액은 0보다 커야 합니다.')
-    return v
-```
+### 유니크 제약조건
+- `projects.code`
+- `contracts.contract_number`
+- `clients.business_number`
+- `vendors.business_number`
 
-### 2. 재무 데이터 검증
-```python
-@validator('amount')
-def validate_amount(cls, v):
-    """금액 검증"""
-    if v <= 0:
-        raise ValueError('금액은 0보다 커야 합니다.')
-    return v
+### 체크 제약조건
+- `progress.progress_percentage`: 0 ≤ progress_percentage ≤ 100
+- `contracts.contract_amount`: contract_amount > 0
+- `contracts.start_date` ≤ `contracts.completion_date`
+- `labor_records.hours_worked`: hours_worked > 0
+- `labor_records.hourly_rate`: hourly_rate ≥ 0
 
-@validator('type')
-def validate_transaction_type(cls, v):
-    """거래 유형 검증"""
-    allowed_types = ['수입', '지출']
-    if v not in allowed_types:
-        raise ValueError(f'거래 유형은 {allowed_types} 중 하나여야 합니다.')
-    return v
-```
+## 📈 인덱스 전략
 
-### 3. 노무 데이터 검증
-```python
-@validator('hours_worked')
-def validate_hours_worked(cls, v):
-    """근무 시간 검증"""
-    if v <= 0 or v > 24:
-        raise ValueError('근무 시간은 0보다 크고 24 이하여야 합니다.')
-    return v
+### 기본 인덱스
+- `projects`: `name`, `code`, `status`
+- `contracts`: `contract_number`, `project_id`, `status`
+- `clients`: `business_number`, `name`
+- `vendors`: `business_number`, `name`
+- `workers`: `name`, `status`
+- `documents`: `project_id`, `document_type`
+- `progress`: `project_id`, `created_at`
+- `financial_records`: `project_id`, `transaction_date`, `transaction_type`
+- `labor_records`: `contract_id`, `work_date`, `worker_id`
 
-@validator('hourly_rate')
-def validate_hourly_rate(cls, v):
-    """시급 검증"""
-    if v < 0:
-        raise ValueError('시급은 0 이상이어야 합니다.')
-    return v
-```
+### 복합 인덱스
+- `contracts`: `(project_id, status)`
+- `documents`: `(project_id, contract_id, document_type)`
+- `financial_records`: `(project_id, transaction_type, transaction_date)`
+- `labor_records`: `(contract_id, work_date, worker_id)`
 
-## 🔄 데이터 마이그레이션
+## 🔍 데이터 접근 패턴
 
-### 마이그레이션 파일 구조
-```
-migrations/
-├── versions/
-│   ├── 001_initial_schema.py
-│   ├── 002_add_financial_tables.py
-│   ├── 003_add_labor_tables.py
-│   └── 004_add_document_tables.py
-├── env.py
-├── script.py.mako
-└── alembic.ini
-```
-
-### 마이그레이션 실행
-```bash
-# 마이그레이션 생성
-alembic revision --autogenerate -m "Add new table"
-
-# 마이그레이션 적용
-alembic upgrade head
-
-# 마이그레이션 롤백
-alembic downgrade -1
-
-# 마이그레이션 상태 확인
-alembic current
-alembic history
-```
-
-## 📊 인덱스 최적화
-
-### 성능 최적화를 위한 인덱스
+### 1. 공사대장 시스템
 ```sql
--- 계약 테이블 인덱스
-CREATE INDEX idx_contracts_contract_number ON contracts(contract_number);
-CREATE INDEX idx_contracts_vendor_id ON contracts(vendor_id);
-CREATE INDEX idx_contracts_status ON contracts(status);
-CREATE INDEX idx_contracts_contract_date ON contracts(contract_date);
+-- 공사 목록 조회
+SELECT p.*, c.contract_number, c.contract_amount, pr.progress_percentage
+FROM projects p
+LEFT JOIN contracts c ON p.id = c.project_id
+LEFT JOIN progress pr ON p.id = pr.project_id
+WHERE p.status = 'ACTIVE';
 
--- 재무 기록 테이블 인덱스
-CREATE INDEX idx_financial_records_contract_id ON financial_records(contract_id);
-CREATE INDEX idx_financial_records_transaction_date ON financial_records(transaction_date);
-CREATE INDEX idx_financial_records_type ON financial_records(type);
-CREATE INDEX idx_financial_records_category ON financial_records(category);
-
--- 노무 기록 테이블 인덱스
-CREATE INDEX idx_labor_records_contract_id ON labor_records(contract_id);
-CREATE INDEX idx_labor_records_worker_id ON labor_records(worker_id);
-CREATE INDEX idx_labor_records_work_date ON labor_records(work_date);
-
--- 거래처 테이블 인덱스
-CREATE INDEX idx_vendors_name ON vendors(name);
-CREATE INDEX idx_vendors_vendor_type ON vendors(vendor_type);
+-- 공사 상세 정보 조회
+SELECT p.*, c.*, cl.name as client_name, pr.*
+FROM projects p
+JOIN contracts c ON p.id = c.project_id
+JOIN clients cl ON c.client_id = cl.id
+LEFT JOIN progress pr ON p.id = pr.project_id
+WHERE p.id = :project_id;
 ```
 
-## 🔒 데이터 보안
+### 2. 계약관리 시스템
+```sql
+-- 계약 목록 조회
+SELECT c.*, p.name as project_name, cl.name as client_name
+FROM contracts c
+JOIN projects p ON c.project_id = p.id
+JOIN clients cl ON c.client_id = cl.id
+WHERE c.status = 'ACTIVE';
 
-### 민감 데이터 암호화
-```python
-# 민감한 정보 암호화
-from cryptography.fernet import Fernet
-
-class EncryptedField:
-    """암호화된 필드"""
-    
-    def __init__(self, key: bytes):
-        self.cipher = Fernet(key)
-    
-    def encrypt(self, data: str) -> str:
-        """데이터 암호화"""
-        return self.cipher.encrypt(data.encode()).decode()
-    
-    def decrypt(self, encrypted_data: str) -> str:
-        """데이터 복호화"""
-        return self.cipher.decrypt(encrypted_data.encode()).decode()
+-- 계약 상세 정보 조회
+SELECT c.*, p.*, cl.*, d.*
+FROM contracts c
+JOIN projects p ON c.project_id = p.id
+JOIN clients cl ON c.client_id = cl.id
+LEFT JOIN documents d ON c.id = d.contract_id
+WHERE c.id = :contract_id;
 ```
 
-### 접근 권한 관리
-```python
-# 데이터 접근 권한
-DATA_ACCESS_PERMISSIONS = {
-    "ADMIN": ["READ", "WRITE", "DELETE", "MANAGE_USERS"],
-    "MANAGER": ["READ", "WRITE", "DELETE"],
-    "USER": ["READ", "WRITE"],
-    "VIEWER": ["READ"]
-}
+### 3. 회계관리 시스템
+```sql
+-- 금액 거래 내역 조회
+SELECT fr.*, p.name as project_name, c.contract_number
+FROM financial_records fr
+JOIN projects p ON fr.project_id = p.id
+LEFT JOIN contracts c ON fr.contract_id = c.id
+WHERE fr.transaction_date BETWEEN :start_date AND :end_date;
+
+-- 프로젝트별 금액 집계
+SELECT p.name, 
+       SUM(CASE WHEN fr.transaction_type = 'INCOME' THEN fr.amount ELSE 0 END) as total_income,
+       SUM(CASE WHEN fr.transaction_type = 'EXPENSE' THEN fr.amount ELSE 0 END) as total_expense
+FROM projects p
+LEFT JOIN financial_records fr ON p.id = fr.project_id
+GROUP BY p.id, p.name;
 ```
 
-## 📈 데이터 백업 및 복구
+### 4. 노무관리 시스템
+```sql
+-- 근로자별 작업 내역 조회
+SELECT w.name, lr.*, c.contract_number, p.name as project_name
+FROM labor_records lr
+JOIN workers w ON lr.worker_id = w.id
+JOIN contracts c ON lr.contract_id = c.id
+JOIN projects p ON c.project_id = p.id
+WHERE lr.work_date BETWEEN :start_date AND :end_date;
 
-### 백업 전략
-```python
-# 자동 백업 설정
-BACKUP_CONFIG = {
-    "schedule": "0 2 * * *",  # 매일 새벽 2시
-    "retention_days": 30,
-    "backup_path": "/backups",
-    "compression": True
-}
+-- 계약별 노무비 집계
+SELECT c.contract_number, 
+       SUM(lr.total_amount) as total_labor_cost,
+       SUM(lr.hours_worked) as total_hours
+FROM labor_records lr
+JOIN contracts c ON lr.contract_id = c.id
+GROUP BY c.id, c.contract_number;
 ```
 
-### 복구 절차
-```bash
-# 데이터베이스 백업
-pg_dump -h localhost -U username -d cma_db > backup.sql
+## 🚀 성능 최적화
 
-# 데이터베이스 복구
-psql -h localhost -U username -d cma_db < backup.sql
-```
+### 1. 쿼리 최적화
+- **인덱스 활용**: 자주 조회되는 컬럼에 인덱스 생성
+- **조인 최적화**: 필요한 테이블만 조인
+- **서브쿼리 최소화**: 가능한 경우 JOIN 사용
 
-이 스키마 설계를 통해 **확장 가능하고 유지보수하기 쉬운** 데이터베이스 구조를 구축할 수 있습니다. 
+### 2. 데이터 파티셔닝
+- **시간 기반 파티셔닝**: `financial_records`, `labor_records` 테이블
+- **프로젝트 기반 파티셔닝**: 대용량 프로젝트의 경우
+
+### 3. 캐싱 전략
+- **Redis 캐싱**: 자주 조회되는 데이터 캐싱
+- **애플리케이션 캐싱**: ORM 쿼리 결과 캐싱
+
+## 🔒 보안 고려사항
+
+### 1. 데이터 암호화
+- **민감 정보 암호화**: 개인정보, 계약 정보
+- **파일 암호화**: 업로드된 문서 파일
+
+### 2. 접근 제어
+- **사용자 권한 관리**: 역할 기반 접근 제어
+- **데이터 접근 로그**: 모든 데이터 접근 기록
+
+### 3. 백업 및 복구
+- **정기 백업**: 일일/주간 백업
+- **재해 복구**: 장애 시 복구 계획
+
+---
+
+**마지막 업데이트**: 2025년 1월 23일
+**문서 버전**: v3.0 

@@ -17,6 +17,9 @@ const ProjectList = React.lazy(() => import('./pages/ProjectList'));
 const ProjectDetail = React.lazy(() => import('./pages/ProjectDetail'));
 const TaskList = React.lazy(() => import('./pages/TaskList'));
 const TaskDetail = React.lazy(() => import('./pages/TaskDetail'));
+const ContractList = React.lazy(() => import('./pages/ContractList'));
+const FinancialList = React.lazy(() => import('./pages/FinancialList'));
+const LaborList = React.lazy(() => import('./pages/LaborList'));
 const ASCR = React.lazy(() => import('./pages/ASCRPage').then(module => ({ default: module.ASCRPage })));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
@@ -37,6 +40,9 @@ const App: React.FC = () => {
                 <Route path="/register" element={<Register />} />
                 <Route element={<Layout />}>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/contracts" element={<ContractList />} />
+                  <Route path="/financial" element={<FinancialList />} />
+                  <Route path="/labor" element={<LaborList />} />
                   <Route path="/projects" element={<ProjectList />} />
                   <Route path="/projects/:id" element={<ProjectDetail />} />
                   <Route path="/tasks" element={<TaskList />} />

@@ -1,0 +1,53 @@
+{
+    "folders": [
+        {
+            "name": "CMA Backend",
+            "path": "./backend"
+        },
+        {
+            "name": "CMA Desktop",
+            "path": "./desktop"
+        },
+        {
+            "name": "CMA Frontend",
+            "path": "./frontend"
+        },
+        {
+            "name": "CMA Docs",
+            "path": "./docs"
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "/home/dydid/CMA/backend/venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.linting.enabled": true,
+        "python.formatting.provider": "black",
+        "python.testing.pytestEnabled": true,
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/*.pyc": true,
+            "**/.pytest_cache": true,
+            "**/node_modules": true
+        },
+        "search.exclude": {
+            "**/venv": true,
+            "**/__pycache__": true,
+            "**/*.pyc": true,
+            "**/node_modules": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.black-formatter",
+            "ms-python.isort",
+            "ms-python.flake8",
+            "ms-python.pylint",
+            "ms-vscode.vscode-json",
+            "ms-vscode.vscode-typescript-next",
+            "bradlc.vscode-tailwindcss",
+            "ms-vscode.vscode-eslint",
+            "esbenp.prettier-vscode"
+        ]
+    }
+} 

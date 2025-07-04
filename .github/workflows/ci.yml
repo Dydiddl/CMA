@@ -1,25 +1,51 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, 1.2.2_샤딩기능 ]
+    branches: [ main, 1.2.2_샤딩기능, develop ]
   pull_request:
-    branches: [ main, 1.2.2_샤딩기능 ]
+    branches: [ main, 1.2.2_샤딩기능, develop ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '18'
 
 jobs:
+  # 보안 검사 (가장 먼저 실행)
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # 프론트엔드 테스트 및 빌드
   frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
+    needs: security-scan
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
 
@@ -29,25 +55,57 @@ jobs:
     - name: Run linter
       run: npm run lint
 
-    - name: Run tests
-      run: npm test
+    - name: Run type check
+      run: npm run type-check
+
+    - name: Run tests with coverage
+      run: npm run test:coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
 
     - name: Build
       run: npm run build
 
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-build
+        path: frontend/dist/
+
+  # 백엔드 테스트 및 검증
   backend:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    needs: security-scan
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cma_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
         cache-dependency-path: backend/requirements.txt
 
@@ -55,34 +113,56 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install pytest-cov pytest-asyncio
 
-    - name: Run backend tests
+    - name: Run backend tests with coverage
       run: |
-        python -m pytest tests/ -v
+        python -m pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+
+    - name: Upload backend coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
 
     - name: Run ASCR module tests
       run: |
         cd app/services/ascr
-        python -m pytest tests/ -v
+        python -m pytest tests/ -v --cov=. --cov-report=xml
 
     - name: Check code formatting
       run: |
         python -m black --check .
         python -m isort --check-only .
 
+    - name: Run security checks
+      run: |
+        pip install bandit safety
+        bandit -r app/ -f json -o bandit-report.json
+        safety check
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-security-reports
+        path: backend/bandit-report.json
+
+  # Tauri 데스크톱 앱 빌드
   tauri:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
+    needs: [frontend, backend]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
 
@@ -92,7 +172,7 @@ jobs:
         toolchain: stable
         override: true
 
-    - name: Cache dependencies
+    - name: Cache Rust dependencies
       uses: actions/cache@v3
       with:
         path: |
@@ -108,4 +188,94 @@ jobs:
       run: npm run tauri build
 
     - name: Run Tauri tests
-      run: npm run test 
+      run: npm run test
+
+    - name: Upload Tauri artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: tauri-app
+        path: frontend/src-tauri/target/release/
+
+  # 성능 테스트
+  performance:
+    runs-on: ubuntu-latest
+    needs: [backend]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        pip install -r backend/requirements.txt
+        pip install locust
+
+    - name: Run performance tests
+      run: |
+        cd backend
+        locust -f tests/performance/locustfile.py --headless --users 10 --spawn-rate 2 --run-time 60s
+
+  # 배포 (main 브랜치에서만 실행)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [frontend, backend, tauri, performance]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          Automated release from CI/CD pipeline
+          
+          Changes in this release:
+          - Frontend build artifacts
+          - Backend API updates
+          - Tauri desktop app
+        draft: false
+        prerelease: false
+
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/tauri-app/
+        asset_name: cma-desktop-app
+        asset_content_type: application/octet-stream
+
+  # 통합 리포트 생성
+  report:
+    runs-on: ubuntu-latest
+    needs: [frontend, backend, tauri]
+    if: always()
+
+    steps:
+    - name: Generate CI Report
+      run: |
+        echo "## CI/CD Pipeline Report" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "- Frontend: ${{ needs.frontend.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Backend: ${{ needs.backend.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Tauri: ${{ needs.tauri.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Coverage" >> $GITHUB_STEP_SUMMARY
+        echo "Coverage reports available in Codecov" >> $GITHUB_STEP_SUMMARY 

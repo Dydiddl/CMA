@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Text, Date
+from sqlalchemy import Column, String, DateTime, Float, ForeignKey, Text, Date, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -20,6 +20,10 @@ class FinancialRecord(Base):
     status = Column(String)  # 미지급, 지급완료 등
     vendor_id = Column(String, ForeignKey("vendors.id"), nullable=True)
     user_id = Column(String, ForeignKey("users.id"), nullable=True, comment="사용자 ID")
+    
+    # 소프트 삭제
+    deleted_at = Column(DateTime, nullable=True, comment="삭제일")
+    is_deleted = Column(Boolean, default=False, nullable=False, comment="삭제 여부")
 
     # 관계 설정
     contract = relationship("Contract", back_populates="financial_records")

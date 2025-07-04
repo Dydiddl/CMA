@@ -14,7 +14,8 @@ import {
   Select,
   MenuItem,
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormHelperText
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -23,6 +24,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { ko } from 'date-fns/locale';
+import { Contract, ContractCreate, ContractUpdate, ContractStatus } from '../../types/contract';
 
 // 타입 정의
 interface ContractFormData {
@@ -40,11 +42,9 @@ interface ContractFormData {
 }
 
 interface ContractFormProps {
-  initialData?: Partial<ContractFormData>;
-  onSubmit: (data: ContractFormData) => Promise<void>;
+  contract?: Contract | null;
+  onSave: (data: ContractCreate | ContractUpdate) => Promise<void>;
   onCancel: () => void;
-  isLoading?: boolean;
-  vendors: Array<{ id: string; name: string }>;
 }
 
 // 유효성 검증 스키마
@@ -72,74 +72,135 @@ const contractSchema = yup.object({
   vendor_id: yup.string().required('거래처를 선택해주세요')
 });
 
-const ContractForm: React.FC<ContractFormProps> = ({
-  initialData,
-  onSubmit,
+export const ContractForm: React.FC<ContractFormProps> = ({
+  contract,
+  onSave,
   onCancel,
-  isLoading = false,
-  vendors
 }) => {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isValid },
-    reset,
-    watch
-  } = useForm<ContractFormData>({
-    resolver: yupResolver(contractSchema),
-    mode: 'onChange',
-    defaultValues: {
-      name: initialData?.name || '',
-      contract_number: initialData?.contract_number || '',
-      contract_amount: initialData?.contract_amount || 0,
-      contract_date: initialData?.contract_date || null,
-      start_date: initialData?.start_date || null,
-      end_date: initialData?.end_date || null,
-      client_name: initialData?.client_name || '',
-      client_contact: initialData?.client_contact || '',
-      status: initialData?.status || '진행중',
-      description: initialData?.description || '',
-      vendor_id: initialData?.vendor_id || ''
-    }
+  const [formData, setFormData] = useState<Partial<ContractCreate>>({
+    name: '',
+    contractNumber: '',
+    contractAmount: 0,
+    contractDate: new Date(),
+    startDate: null,
+    endDate: null,
+    clientName: '',
+    clientContact: '',
+    status: '진행중',
+    description: '',
+    vendorId: '',
   });
 
-  const watchStartDate = watch('start_date');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // 초기 데이터가 변경되면 폼 리셋
+  const isEditMode = !!contract;
+
+  // 초기 데이터 설정
   useEffect(() => {
-    if (initialData) {
-      reset({
-        name: initialData.name || '',
-        contract_number: initialData.contract_number || '',
-        contract_amount: initialData.contract_amount || 0,
-        contract_date: initialData.contract_date || null,
-        start_date: initialData.start_date || null,
-        end_date: initialData.end_date || null,
-        client_name: initialData.client_name || '',
-        client_contact: initialData.client_contact || '',
-        status: initialData.status || '진행중',
-        description: initialData.description || '',
-        vendor_id: initialData.vendor_id || ''
+    if (contract) {
+      setFormData({
+        name: contract.name,
+        contractNumber: contract.contractNumber,
+        contractAmount: contract.contractAmount,
+        contractDate: new Date(contract.contractDate),
+        startDate: contract.startDate ? new Date(contract.startDate) : null,
+        endDate: contract.endDate ? new Date(contract.endDate) : null,
+        clientName: contract.clientName,
+        clientContact: contract.clientContact || '',
+        status: contract.status,
+        description: contract.description || '',
+        vendorId: contract.vendorId,
       });
     }
-  }, [initialData, reset]);
+  }, [contract]);
 
-  const handleFormSubmit = async (data: ContractFormData) => {
-    try {
-      setError(null);
-      await onSubmit(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '계약 저장 중 오류가 발생했습니다');
+  // 폼 검증
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name?.trim()) {
+      newErrors.name = '계약명을 입력해주세요.';
     }
+
+    if (!formData.contractNumber?.trim()) {
+      newErrors.contractNumber = '계약번호를 입력해주세요.';
+    }
+
+    if (!formData.contractAmount || formData.contractAmount <= 0) {
+      newErrors.contractAmount = '계약금액을 입력해주세요.';
+    }
+
+    if (!formData.contractDate) {
+      newErrors.contractDate = '계약일을 선택해주세요.';
+    }
+
+    if (!formData.clientName?.trim()) {
+      newErrors.clientName = '발주처명을 입력해주세요.';
+    }
+
+    if (!formData.vendorId?.trim()) {
+      newErrors.vendorId = '거래처를 선택해주세요.';
+    }
+
+    // 종료일 검증
+    if (formData.endDate && formData.startDate && formData.endDate <= formData.startDate) {
+      newErrors.endDate = '종료일은 시작일보다 늦어야 합니다.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 폼 제출
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const submitData = {
+        ...formData,
+        contractDate: formData.contractDate?.toISOString(),
+        startDate: formData.startDate?.toISOString(),
+        endDate: formData.endDate?.toISOString(),
+      };
+
+      await onSave(submitData);
+    } catch (err: any) {
+      setError(err.message || '계약 저장에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 입력 필드 변경
+  const handleInputChange = (field: keyof ContractCreate, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // 에러 초기화
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // 금액 포맷팅
+  const formatAmount = (value: string) => {
+    const numericValue = value.replace(/[^\d]/g, '');
+    return numericValue ? parseInt(numericValue, 10) : 0;
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
       <Paper elevation={3} sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
         <Typography variant="h5" component="h2" gutterBottom>
-          {initialData ? '계약 수정' : '새 계약 등록'}
+          {isEditMode ? '계약 수정' : '새 계약 등록'}
         </Typography>
 
         {error && (
@@ -148,282 +209,191 @@ const ContractForm: React.FC<ContractFormProps> = ({
           </Alert>
         )}
 
-        <Box component="form" onSubmit={handleSubmit(handleFormSubmit)}>
-          <Grid container spacing={3}>
-            {/* 기본 정보 */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                기본 정보
-              </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Grid container spacing={2}>
+            {/* 계약명 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="계약명 *"
+                value={formData.name || ''}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                error={!!errors.name}
+                helperText={errors.name}
+                required
+              />
             </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="계약명"
-                    fullWidth
-                    required
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
-                    disabled={isLoading}
-                  />
-                )}
+            
+            {/* 계약번호 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="계약번호 *"
+                value={formData.contractNumber || ''}
+                onChange={(e) => handleInputChange('contractNumber', e.target.value)}
+                error={!!errors.contractNumber}
+                helperText={errors.contractNumber}
+                required
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="contract_number"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="계약번호"
-                    fullWidth
-                    required
-                    error={!!errors.contract_number}
-                    helperText={errors.contract_number?.message}
-                    disabled={isLoading}
-                  />
-                )}
+            {/* 계약금액 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="계약금액 *"
+                type="number"
+                value={formData.contractAmount || ''}
+                onChange={(e) => handleInputChange('contractAmount', parseFloat(e.target.value))}
+                error={!!errors.contractAmount}
+                helperText={errors.contractAmount}
+                required
+                InputProps={{
+                  endAdornment: <Typography variant="caption">원</Typography>,
+                }}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="contract_amount"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="계약금액"
-                    type="number"
-                    fullWidth
-                    required
-                    error={!!errors.contract_amount}
-                    helperText={errors.contract_amount?.message}
-                    disabled={isLoading}
-                    InputProps={{
-                      startAdornment: <span>₩</span>
-                    }}
-                  />
-                )}
+            {/* 계약일 */}
+            <Grid item xs={12} sm={6}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <DatePicker
+                  label="계약일 *"
+                  value={formData.contractDate}
+                  onChange={(date) => handleInputChange('contractDate', date)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      error={!!errors.contractDate}
+                      helperText={errors.contractDate}
+                      required
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+            </Grid>
+
+            {/* 시작일 */}
+            <Grid item xs={12} sm={6}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <DatePicker
+                  label="시작일"
+                  value={formData.startDate}
+                  onChange={(date) => handleInputChange('startDate', date)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      helperText="선택사항"
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+            </Grid>
+
+            {/* 종료일 */}
+            <Grid item xs={12} sm={6}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <DatePicker
+                  label="종료일"
+                  value={formData.endDate}
+                  onChange={(date) => handleInputChange('endDate', date)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      error={!!errors.endDate}
+                      helperText={errors.endDate || "선택사항"}
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+            </Grid>
+
+            {/* 발주처명 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="발주처명 *"
+                value={formData.clientName || ''}
+                onChange={(e) => handleInputChange('clientName', e.target.value)}
+                error={!!errors.clientName}
+                helperText={errors.clientName}
+                required
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="vendor_id"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth required error={!!errors.vendor_id} disabled={isLoading}>
-                    <InputLabel>거래처</InputLabel>
-                    <Select {...field} label="거래처">
-                      {vendors.map((vendor) => (
-                        <MenuItem key={vendor.id} value={vendor.id}>
-                          {vendor.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {errors.vendor_id && (
-                      <Typography variant="caption" color="error">
-                        {errors.vendor_id.message}
-                      </Typography>
-                    )}
-                  </FormControl>
-                )}
+            {/* 발주처 연락처 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="발주처 연락처"
+                value={formData.clientContact || ''}
+                onChange={(e) => handleInputChange('clientContact', e.target.value)}
+                helperText="선택사항"
               />
             </Grid>
 
-            {/* 날짜 정보 */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                날짜 정보
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Controller
-                name="contract_date"
-                control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    label="계약일"
-                    value={field.value}
-                    onChange={field.onChange}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true,
-                        error: !!errors.contract_date,
-                        helperText: errors.contract_date?.message,
-                        disabled: isLoading
-                      }
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Controller
-                name="start_date"
-                control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    label="시작일"
-                    value={field.value}
-                    onChange={field.onChange}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        error: !!errors.start_date,
-                        helperText: errors.start_date?.message,
-                        disabled: isLoading
-                      }
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Controller
-                name="end_date"
-                control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    label="종료일"
-                    value={field.value}
-                    onChange={field.onChange}
-                    minDate={watchStartDate || undefined}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        error: !!errors.end_date,
-                        helperText: errors.end_date?.message,
-                        disabled: isLoading
-                      }
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            {/* 발주처 정보 */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                발주처 정보
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="client_name"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="발주처명"
-                    fullWidth
-                    required
-                    error={!!errors.client_name}
-                    helperText={errors.client_name?.message}
-                    disabled={isLoading}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="client_contact"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="발주처 연락처"
-                    fullWidth
-                    error={!!errors.client_contact}
-                    helperText={errors.client_contact?.message}
-                    disabled={isLoading}
-                  />
-                )}
-              />
-            </Grid>
-
-            {/* 상태 및 설명 */}
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="status"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth required error={!!errors.status} disabled={isLoading}>
-                    <InputLabel>상태</InputLabel>
-                    <Select {...field} label="상태">
-                      <MenuItem value="진행중">진행중</MenuItem>
-                      <MenuItem value="완료">완료</MenuItem>
-                      <MenuItem value="중단">중단</MenuItem>
-                      <MenuItem value="취소">취소</MenuItem>
-                    </Select>
-                    {errors.status && (
-                      <Typography variant="caption" color="error">
-                        {errors.status.message}
-                      </Typography>
-                    )}
-                  </FormControl>
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="계약 설명"
-                    multiline
-                    rows={4}
-                    fullWidth
-                    error={!!errors.description}
-                    helperText={errors.description?.message}
-                    disabled={isLoading}
-                  />
-                )}
-              />
-            </Grid>
-
-            {/* 버튼 */}
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  onClick={onCancel}
-                  disabled={isLoading}
+            {/* 상태 */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>상태</InputLabel>
+                <Select
+                  value={formData.status || '진행중'}
+                  label="상태"
+                  onChange={(e) => handleInputChange('status', e.target.value)}
                 >
-                  취소
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isLoading || !isValid}
-                  startIcon={isLoading ? <CircularProgress size={20} /> : null}
-                >
-                  {isLoading ? '저장 중...' : (initialData ? '수정' : '등록')}
-                </Button>
-              </Box>
+                  <MenuItem value="진행중">진행중</MenuItem>
+                  <MenuItem value="완료">완료</MenuItem>
+                  <MenuItem value="중단">중단</MenuItem>
+                  <MenuItem value="취소">취소</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* 거래처 ID */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="거래처 ID *"
+                value={formData.vendorId || ''}
+                onChange={(e) => handleInputChange('vendorId', e.target.value)}
+                error={!!errors.vendorId}
+                helperText={errors.vendorId}
+                required
+              />
+            </Grid>
+
+            {/* 설명 */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="설명"
+                multiline
+                rows={3}
+                value={formData.description || ''}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                helperText="선택사항"
+              />
             </Grid>
           </Grid>
+
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : null}
+            >
+              {isEditMode ? '수정' : '등록'}
+            </Button>
+            <Button variant="outlined" onClick={onCancel} disabled={loading}>
+              취소
+            </Button>
+          </Box>
         </Box>
       </Paper>
     </LocalizationProvider>
   );
-};
-
-export default ContractForm; 
+}; 

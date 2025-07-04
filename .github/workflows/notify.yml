@@ -1,0 +1,40 @@
+name: Notify CI Results
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'skipped' }}
+    
+    steps:
+      - name: Notify on Success
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            ✅ CI/CD Pipeline 성공!
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.event.workflow_run.head_branch }}
+            Commit: ${{ github.event.workflow_run.head_sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on Failure
+        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ CI/CD Pipeline 실패!
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.event.workflow_run.head_branch }}
+            Commit: ${{ github.event.workflow_run.head_sha }}
+            Workflow: ${{ github.event.workflow_run.html_url }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

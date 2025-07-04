@@ -41,8 +41,12 @@ async def create_contract(
         HTTPException: 500 - 서버 오류
     """
     try:
-        contract_service = ContractService(db)
-        result = contract_service.create_contract(contract, current_user.id)
+        from app.core.cache import CacheManager
+        cache_manager = CacheManager()
+        await cache_manager.connect()
+        
+        contract_service = ContractService(db, cache_manager)
+        result = await contract_service.create_contract(contract, current_user.id)
         return result
     except ValueError as e:
         raise HTTPException(
@@ -80,8 +84,12 @@ async def get_contracts(
         ContractListResponse: 계약 목록 및 페이징 정보
     """
     try:
-        contract_service = ContractService(db)
-        contracts, total = contract_service.get_contracts(
+        from app.core.cache import CacheManager
+        cache_manager = CacheManager()
+        await cache_manager.connect()
+        
+        contract_service = ContractService(db, cache_manager)
+        contracts, total = await contract_service.get_contracts(
             skip=skip, limit=limit, search=search, status=status_filter
         )
         return ContractListResponse(
@@ -118,8 +126,12 @@ async def get_contract(
         HTTPException: 404 - 계약을 찾을 수 없음
     """
     try:
-        contract_service = ContractService(db)
-        contract_detail = contract_service.get_contract_detail(contract_id)
+        from app.core.cache import CacheManager
+        cache_manager = CacheManager()
+        await cache_manager.connect()
+        
+        contract_service = ContractService(db, cache_manager)
+        contract_detail = await contract_service.get_contract_detail(contract_id)
         if not contract_detail:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -159,8 +171,12 @@ async def update_contract(
         HTTPException: 404 - 계약을 찾을 수 없음
     """
     try:
-        contract_service = ContractService(db)
-        contract = contract_service.update_contract(contract_id, contract_update)
+        from app.core.cache import CacheManager
+        cache_manager = CacheManager()
+        await cache_manager.connect()
+        
+        contract_service = ContractService(db, cache_manager)
+        contract = await contract_service.update_contract(contract_id, contract_update)
         if not contract:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
@@ -202,8 +218,12 @@ async def delete_contract(
         HTTPException: 404 - 계약을 찾을 수 없음
     """
     try:
-        contract_service = ContractService(db)
-        success = contract_service.delete_contract(contract_id)
+        from app.core.cache import CacheManager
+        cache_manager = CacheManager()
+        await cache_manager.connect()
+        
+        contract_service = ContractService(db, cache_manager)
+        success = await contract_service.delete_contract(contract_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
